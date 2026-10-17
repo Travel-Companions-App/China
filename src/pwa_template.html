@@ -10,10 +10,22 @@
 <meta name="theme-color" content="#b3261e">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
-<title>Китайский</title>
+<title>Китайский для туриста — офлайн-разговорник и тренажёр</title>
+<meta name="description" content="Бесплатный офлайн-разговорник китайского для русскоязычных туристов: фразы с иероглифами, pinyin и произношением кириллицей, карточки «показать таксисту», уроки, диалоги, справочник о жизни в Китае. Работает без интернета на iPhone.">
+<link rel="canonical" href="__SITE__">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:title" content="Китайский для туриста — офлайн-разговорник">
+<meta property="og:description" content="Фразы с pinyin и кириллицей «как слышится», карточки для таксиста, уроки и диалоги. Работает офлайн, ставится на экран «Домой».">
+<meta property="og:url" content="__SITE__">
+<meta property="og:image" content="__SITE__og.png">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">__JSONLD__</script>
+<script>try{var t=JSON.parse(localStorage.getItem("cn:theme")||'"auto"');if(t!=="auto")document.documentElement.dataset.theme=t}catch(e){}</script>
 <style>
-:root{--bg:#faf8f5;--fg:#1c1b1a;--muted:#6b6660;--line:#e3ddd5;--card:#fff;--acc:#b3261e;--cy:#1f5f8b;--ok:#1f6f4a;--soft:#f1ebe3}
-@media (prefers-color-scheme:dark){:root{--bg:#141312;--fg:#efeae3;--muted:#a39d95;--line:#33302c;--card:#1f1e1c;--acc:#ff6b5e;--cy:#7cc0f0;--ok:#5bc48f;--soft:#2a2724}}
+:root{--bg:#faf8f5;--fg:#1c1b1a;--muted:#6b6660;--line:#e3ddd5;--card:#fff;--acc:#b3261e;--cy:#1f5f8b;--ok:#1f6f4a;--soft:#f1ebe3;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#141312;--fg:#efeae3;--muted:#a39d95;--line:#33302c;--card:#1f1e1c;--acc:#ff6b5e;--cy:#7cc0f0;--ok:#5bc48f;--soft:#2a2724;color-scheme:dark}}
+:root[data-theme=dark]{--bg:#141312;--fg:#efeae3;--muted:#a39d95;--line:#33302c;--card:#1f1e1c;--acc:#ff6b5e;--cy:#7cc0f0;--ok:#5bc48f;--soft:#2a2724;color-scheme:dark}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--fg)}
 body{font:17px/1.4 -apple-system,"PingFang SC","Noto Sans CJK SC",system-ui,sans-serif;padding-bottom:calc(64px + env(safe-area-inset-bottom))}
@@ -49,16 +61,60 @@ input[type=search]{width:100%;font:inherit;font-size:16px;padding:10px 12px;bord
 .item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);align-items:flex-start}
 .item .zh{font-size:24px;min-width:3.2em}
 .item .t{flex:1;font-size:15px}
+.item.long{flex-wrap:wrap;row-gap:2px}.item.long .zh{flex-basis:100%}
 .say{border:0;background:var(--soft);border-radius:10px;width:40px;height:40px;font-size:18px;flex:none}
 h2{font-size:13px;color:var(--acc);margin:20px 0 2px;text-transform:uppercase;letter-spacing:.05em}
 .sc{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:10px}
 .sc .t{font-size:13px;color:var(--acc);font-weight:600}
 .sc .zh{font-size:21px;margin-top:4px}
-#full{position:fixed;inset:0;background:#fff;color:#000;z-index:20;padding:calc(24px + env(safe-area-inset-top)) 22px 40px;overflow:auto}
-#full .zh{font-size:clamp(34px,10vw,64px);line-height:1.3}
+#full{position:fixed;inset:0;background:#fff;color:#000;z-index:20;overflow:hidden;--fz:1}
+#full .fbody{position:absolute;inset:0;overflow:auto;padding:calc(64px + env(safe-area-inset-top)) 22px calc(90px + env(safe-area-inset-bottom))}
+#full.rot .fbody{inset:auto;top:50%;left:50%;width:100vh;height:100vw;transform:translate(-50%,-50%) rotate(90deg);padding:24px 28px 24px 28px}
+#full .zh{font-size:calc(clamp(34px,10vw,64px) * var(--fz));line-height:1.3;overflow-wrap:anywhere}
+#full.rot .zh{font-size:calc(clamp(34px,10vh,72px) * var(--fz))}
 #full .s{color:#555;font-size:16px;margin-top:16px}
 #full .cy2{color:#1f5f8b;font-size:17px;margin-top:4px}
-#full .close{position:fixed;right:14px;top:calc(10px + env(safe-area-inset-top));border:0;background:#eee;border-radius:20px;padding:8px 14px;font:inherit;font-size:15px}
+#full .ftop,#full .fbot{position:absolute;left:0;right:0;display:flex;gap:8px;padding:0 12px;z-index:2}
+#full .ftop{top:calc(10px + env(safe-area-inset-top));justify-content:space-between;align-items:center}
+#full .fbot{bottom:calc(14px + env(safe-area-inset-bottom))}
+#full .fb{border:0;background:#eee;color:#000;border-radius:20px;padding:9px 14px;font:inherit;font-size:15px;min-width:44px}
+#full .fbot .fb{flex:1;padding:12px 6px}
+#full .fb.on{background:#ffe08a}
+#full .fpos{font-size:13px;color:#777}
+.fav{border:0;background:none;font-size:20px;color:var(--muted);width:40px;height:40px;flex:none;padding:0}
+.fav.on{color:#e0a000}
+.home{padding-top:8px}
+.hero{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.hero h1{margin:0;font-size:30px;letter-spacing:-.01em}
+.hero h1 span{color:var(--acc)}
+.net{font-size:12px;color:var(--muted);white-space:nowrap}
+.net i{display:inline-block;width:7px;height:7px;border-radius:4px;background:var(--muted);margin-right:5px;vertical-align:1px}
+.net.on i{background:var(--ok)}
+.sub{color:var(--muted);font-size:15px;margin:4px 0 14px}
+.quick{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.qk{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:14px;padding:12px 8px;font:inherit;font-size:13px;text-align:center}
+.qk b{display:block;font-size:22px;margin-bottom:4px;font-weight:700}
+.qk.main{background:var(--acc);border-color:var(--acc);color:#fff}
+.blk{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:10px;width:100%;font:inherit;color:var(--fg);text-align:left;display:block}
+.blk .lbl{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.blk .big2{font-size:20px;font-weight:600;margin-top:2px}
+.blk .zh{font-size:26px}
+.res h2:first-child{margin-top:8px}
+.ritem{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.ritem .t{flex:1;min-width:0}
+.ritem .zh{font-size:22px}
+.ritem .m{font-size:14px}
+.rlink{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line);background:none;color:var(--fg);font:inherit;padding:12px 0}
+.rlink small{display:block;color:var(--muted);font-size:13px}
+#upd{position:fixed;left:12px;right:12px;bottom:calc(72px + env(safe-area-inset-bottom));z-index:15;background:var(--fg);color:var(--bg);border-radius:14px;padding:12px 14px;display:flex;gap:10px;align-items:center;font-size:15px;box-shadow:0 6px 24px rgba(0,0,0,.25)}
+#upd span{flex:1}
+#upd button{border:0;border-radius:10px;padding:8px 12px;font:inherit;font-size:15px;background:var(--acc);color:#fff}
+.form label{display:block;font-size:13px;color:var(--muted);margin:12px 0 4px}
+.form input,.form textarea{width:100%;font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--fg)}
+.form .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cur{font-size:12px;color:#fff;background:var(--ok);border-radius:6px;padding:2px 6px;margin-left:6px;vertical-align:2px}
+.srsrow{display:flex;gap:6px;font-size:13px;color:var(--muted);margin-bottom:4px;flex-wrap:wrap}
+.srsrow b{color:var(--fg)}
 .sylgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:0 8px}
 .syl{padding:7px 2px;border-bottom:1px solid var(--line);font-size:15px}
 .syl b{font-weight:600}
@@ -105,17 +161,20 @@ h2{font-size:13px;color:var(--acc);margin:20px 0 2px;text-transform:uppercase;le
 </head>
 <body>
 <header><select id="deck"></select><div class="voice muted" id="vstat"></div></header>
+<noscript><p style="padding:16px">Офлайн-разговорник китайского для туриста: фразы с иероглифами, pinyin и произношением кириллицей, карточки для таксиста, уроки, диалоги и справочник. Для работы включите JavaScript. Исходники и описание: <a href="https://github.com/aleksandrkaiser/cn-trainer">github.com/aleksandrkaiser/cn-trainer</a>.</p></noscript>
 <main>
-  <section id="v-show">
-    <p class="muted">Нажмите карточку — откроется крупно, чтобы показать собеседнику.</p>
+  <section id="v-home" class="home"></section>
+  <section id="v-show" class="hide">
+    <p class="muted">Нажмите карточку — откроется крупно, чтобы показать собеседнику. Листайте свайпом.</p>
     <div id="shows"></div>
   </section>
   <section id="v-learn" class="hide">
-    <div class="muted" id="lstat"></div>
+    <div class="srsrow" id="lstat"></div>
     <div class="bar"><i id="lbar"></i></div>
     <label class="muted"><input type="checkbox" id="rev"> Наоборот: русский → китайский</label>
     <div class="fc" id="fc" style="margin-top:10px"></div>
     <div class="row"><button class="btn no" id="bNo">Не знаю</button><button class="btn" id="bSay">🔊</button><button class="btn yes" id="bYes">Знаю</button></div>
+    <p class="muted" style="text-align:center;margin:8px 0 0">Свайп вправо — знаю, влево — не знаю. Знакомые карточки вернутся через 1, 3, 7, 16, 35 дней.</p>
     <div class="row"><button class="btn" id="bReset" style="font-size:14px">Сбросить прогресс колоды</button></div>
   </section>
   <section id="v-quiz" class="hide">
@@ -132,10 +191,17 @@ h2{font-size:13px;color:var(--acc);margin:20px 0 2px;text-transform:uppercase;le
   <section id="v-dlg" class="hide"></section>
   <section id="v-gd" class="hide"></section>
   <section id="v-more" class="hide more">
-    <button class="li" data-go="learn"><span class="n">🃏</span><span class="tt"><div>Карточки</div><div class="muted">Фразы, вывески и слова уроков</div></span></button>
+    <button class="li" data-go="list"><span class="n">🔎</span><span class="tt"><div>Фразы и вывески</div><div class="muted">Весь разговорник списком, по разделам</div></span></button>
+    <button class="li" data-go="my"><span class="n">✍︎</span><span class="tt"><div>Мои фразы</div><div class="muted">Нет нужной фразы — спросите Claude и сохраните ответ офлайн</div></span></button>
+    <button class="li" data-go="learn"><span class="n">🃏</span><span class="tt"><div>Карточки</div><div class="muted">Интервальное повторение: фразы, вывески, слова уроков</div></span></button>
     <button class="li" data-go="quiz"><span class="n">✅</span><span class="tt"><div>Тест</div><div class="muted">Выбрать перевод</div></span></button>
+    <button class="li" data-go="trips"><span class="n">🧳</span><span class="tt"><div>Поездка</div><div class="muted">Города, отели и вокзалы → карточки для такси</div></span></button>
     <button class="li" data-go="syl"><span class="n">ā</span><span class="tt"><div>Слоги</div><div class="muted">Как читать pinyin, все 406 слогов</div></span></button>
+    <button class="li" data-go="set"><span class="n">⚙︎</span><span class="tt"><div>Настройки</div><div class="muted">Тема, резервная копия прогресса, версия</div></span></button>
   </section>
+  <section id="v-trips" class="hide"></section>
+  <section id="v-my" class="hide"></section>
+  <section id="v-set" class="hide"></section>
   <section id="v-syl" class="hide">
     <h2 style="margin-top:4px">Как читать</h2>
     <div class="tips" id="tips"></div>
@@ -145,18 +211,23 @@ h2{font-size:13px;color:var(--acc);margin:20px 0 2px;text-transform:uppercase;le
   </section>
 </main>
 <nav id="tabs">
-  <button data-v="show" class="on"><b>📋</b>Показать</button>
+  <button data-v="home" class="on"><b>你</b>Главная</button>
+  <button data-v="show"><b>📋</b>Показать</button>
   <button data-v="les"><b>📖</b>Уроки</button>
   <button data-v="dlg"><b>💬</b>Диалоги</button>
   <button data-v="gd"><b>🧭</b>Справка</button>
-  <button data-v="list"><b>🔎</b>Фразы</button>
   <button data-v="more"><b>⋯</b>Ещё</button>
 </nav>
 <div id="full" class="hide"></div>
+<div id="upd" class="hide"><span>Доступна новая версия</span><button id="updgo">Обновить</button></div>
 <script>
 const DATA = __DATA__;
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("cn:" + k); return v ? JSON.parse(v) : d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("cn:" + k, JSON.stringify(v)); } catch {} }
+};
 
 const ALL = [];
 for (const [sect, items] of Object.entries(DATA.phrases)) for (const [zh, py, cy, ru] of items) ALL.push({zh, py, cy, ru, deck: "Фразы: " + sect});
@@ -166,17 +237,76 @@ for (const [zh, py, cy, ru] of DATA.stations) ALL.push({zh, py, cy, ru, deck: "�
 for (const l of DATA.lessons) for (const b of l.theory) if (b.k === "e") ALL.push({zh: b.zh, py: b.py, cy: b.cy, ru: b.ru, deck: `Урок ${l.n}: ${l.title}`});
 ALL.forEach((c, i) => c.id = c.deck + "|" + c.zh);
 
-const store = {
-  get(k, d) { try { const v = localStorage.getItem("cn:" + k); return v ? JSON.parse(v) : d; } catch { return d; } },
-  set(k, v) { try { localStorage.setItem("cn:" + k, JSON.stringify(v)); } catch {} }
-};
-let known = store.get("known", {});
-const decks = ["Все", "Все фразы", "Все вывески", ...new Set(ALL.map(c => c.deck))];
+// ---- pinyin → кириллица: те же правила, что translit.py (таблица слогов приходит из сборки)
+const SYL = new Map(); for (const [, list] of DATA.syllables) for (const [p, c] of list) SYL.set(p, c);
+const stripTones = t => t.normalize("NFD").replace(/[\u0300-\u0307\u0309-\u036f]/g, "").normalize("NFC");  // тоны долой, ü (U+0308) оставляем
+function segment(w) {
+  const best = [[]];
+  for (let i = 0; i < w.length; i++) {
+    if (!best[i]) continue;
+    for (let L = 1; L <= Math.min(6, w.length - i); L++) {
+      const p = w.slice(i, i + L);
+      if (SYL.has(p) && (!best[i + L] || best[i].length + 1 < best[i + L].length)) best[i + L] = best[i].concat(p);
+    }
+  }
+  return best[w.length] || null;
+}
+function wordCyr(w) {
+  const parts = [];
+  for (const chunk of stripTones(w).toLowerCase().split("'")) {
+    let seg = segment(chunk), er = "";
+    if (!seg && chunk.endsWith("r")) { seg = segment(chunk.slice(0, -1)); er = "р"; }
+    if (!seg) return null;
+    const cy = seg.map(x => SYL.get(x)); cy[cy.length - 1] += er; parts.push(...cy);
+  }
+  return parts.join("-");
+}
+const toCyr = t => String(t).replace(/[A-Za-z\u00C0-\u024F']+/g, w => wordCyr(w) ?? w);
+
+// ---- мои фразы (добавлены пользователем, например из ответа Claude)
+const MY = "Мои фразы";
+let myList = store.get("my", []);
+function syncMy() {
+  for (let i = ALL.length - 1; i >= 0; i--) if (ALL[i].deck === MY) ALL.splice(i, 1);
+  for (const m of myList) ALL.push({zh: m.zh, py: m.py, cy: toCyr(m.py), ru: m.ru, deck: MY, id: MY + "|" + m.zh});
+}
+syncMy();
+
+const DAY = 864e5;
+const today = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); };
+const isoDay = t => { const d = new Date(t); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+const parseDay = s => { const m = /^(\d{4})-(\d\d)-(\d\d)$/.exec(s || ""); return m ? new Date(+m[1], m[2] - 1, +m[3]).getTime() : null; };
+
+// ---- интервальное повторение (упрощённый Лейтнер): ящик 0 — новая, 1..5 — интервалы ниже
+const IVL = [0, 1, 3, 7, 16, 35];
+let srs = store.get("srs", null);
+if (!srs) {  // перенос старого прогресса «знаю»
+  srs = {}; const old = store.get("known", {});
+  for (const id in old) srs[id] = {b: 2, due: today() + IVL[2] * DAY};
+  store.set("srs", srs);
+}
+const isDue = c => srs[c.id] && srs[c.id].due <= today() && srs[c.id].b > 0;
+const isNew = c => !srs[c.id];
+const isLearned = c => srs[c.id] && srs[c.id].b >= 3;
+
+// ---- избранное: снимок фразы, чтобы показывать без поиска по данным
+let favs = store.get("favs", {});
+const favId = c => c.id || ("x|" + [].concat(c.zh).join(""));
+const isFav = c => !!favs[favId(c)];
+function toggleFav(c) {
+  const id = favId(c);
+  if (favs[id]) delete favs[id]; else favs[id] = {id, zh: [].concat(c.zh), py: c.py, cy: c.cy, ru: c.ru, t: Date.now()};
+  store.set("favs", favs); return !!favs[id];
+}
+const favCards = () => Object.values(favs).sort((a, b) => a.t - b.t).map(f => ({...f, zh: f.zh.join(""), lines: f.zh, deck: "★ Избранное"}));
+
+const decks = ["Все", "★ Избранное", MY, "Все фразы", "Все вывески", ...new Set(ALL.map(c => c.deck).filter(d => d !== MY))];
 decks.forEach(d => $("deck").add(new Option(d, d)));
 $("deck").value = store.get("deck", "Все");
 function cards() {
   const d = $("deck").value;
   if (d === "Все") return ALL;
+  if (d === "★ Избранное") return favCards();
   if (d === "Все фразы") return ALL.filter(c => c.deck.startsWith("Фразы"));
   if (d === "Все вывески") return ALL.filter(c => c.deck.startsWith("Вывески"));
   return ALL.filter(c => c.deck === d);
@@ -201,9 +331,10 @@ function say(text) {
 }
 
 // ---- tabs
-let view = "show";
-const UNDER_MORE = ["learn", "quiz", "syl"];
-function go(v) {
+let view = "home";
+const UNDER_MORE = ["learn", "quiz", "syl", "list", "trips", "set", "my"];
+function go(v, keep) {
+  if (v === view && v === "home" && !keep) { homeQ = ""; }
   view = v;
   const tab = UNDER_MORE.includes(v) ? "more" : v;
   for (const x of document.querySelectorAll("#tabs button")) x.classList.toggle("on", x.dataset.v === tab);
@@ -216,35 +347,105 @@ $("tabs").onclick = e => { const b = e.target.closest("button"); if (b) go(b.dat
 $("v-more").onclick = e => { const b = e.target.closest("[data-go]"); if (b) go(b.dataset.go); };
 
 // ---- show cards
+function taxiCard(s) {
+  const T = DATA.trip, base = DATA.show.find(c => c.id === "taxi");
+  return {id: "trip:taxi:" + s.id, title: "Такси → отель" + (s.city ? " · " + s.city : ""),
+    zh: [T.taxi[0], s.hotel, s.addr, s.phone ? T.phone + s.phone : ""].filter(Boolean),
+    py: T.taxi[1], cy: T.taxi[2], ru: base ? base.ru : ""};
+}
+function stationCard(s) {
+  const T = DATA.trip, st = DATA.stations.find(x => x[0] === s.station);
+  return {id: "trip:st:" + s.id, title: "Такси → вокзал" + (s.city ? " · " + s.city : ""),
+    zh: [T.station[0], s.station], py: T.station[1] + (st ? " · " + st[1] : ""), cy: T.station[2] + (st ? " · " + st[2] : ""),
+    ru: "Водитель, отвезите нас, пожалуйста, на этот вокзал" + (st ? ": " + st[3] : "") + "."};
+}
+function showCards() {
+  const s = curStop(), out = [];
+  for (const c of DATA.show) {
+    if (c.id === "taxi") {
+      out.push(s && s.hotel ? taxiCard(s) : {...c, id: "show:" + c.id});
+      if (s && s.station) out.push(stationCard(s));
+    } else out.push({...c, id: "show:" + c.id});
+  }
+  return out;
+}
 function drawShows() {
   const box = $("shows"); box.innerHTML = "";
-  DATA.show.forEach(c => {
+  const list = showCards(), fv = favCards();
+  const all = list.concat(fv.map(f => ({...f, zh: f.lines, title: "★ " + f.ru})));
+  all.forEach((c, i) => {
     const d = document.createElement("div"); d.className = "sc";
     d.innerHTML = `<div class="t">${esc(c.title)}</div><div class="zh">${esc(c.zh.join(""))}</div><div class="muted">${esc(c.ru)}</div>`;
-    d.onclick = () => openFull(c); box.appendChild(d);
+    d.onclick = () => openFull(c, all, i); box.appendChild(d);
   });
 }
-function openFull(c) {
-  $("full").innerHTML = `<button class="close" id="fclose">Закрыть</button><div class="zh">${c.zh.map(esc).join("<br>")}</div>
-    <div class="s">${esc(c.py)}</div><div class="cy2">${esc(c.cy)}</div><div class="s">${esc(c.ru)}</div>
-    <button class="btn" id="fsay" style="margin-top:18px;width:100%;background:#eee;color:#000">🔊 Произнести</button>`;
-  $("full").classList.remove("hide");
-  $("fclose").onclick = () => $("full").classList.add("hide");
-  $("fsay").onclick = () => say(c.zh.join(""));
+
+// ---- показ крупно: свайпы, размер, поворот, экран не гаснет
+let fullS = null, wakeLock = null;
+async function lockScreen() {
+  try { if ("wakeLock" in navigator && !wakeLock) { wakeLock = await navigator.wakeLock.request("screen"); wakeLock.addEventListener("release", () => { wakeLock = null; }); } } catch { wakeLock = null; }
 }
+function unlockScreen() { try { wakeLock && wakeLock.release(); } catch {} wakeLock = null; }
+document.addEventListener("visibilitychange", () => { if (fullS && document.visibilityState === "visible") lockScreen(); });
+function openFull(c, list, i) {
+  list = list && list.length ? list : [c]; i = list && list.length ? (i || 0) : 0;
+  fullS = {list, i, fz: store.get("fz", 1), rot: false};
+  $("full").classList.remove("hide"); drawFull(); lockScreen();
+}
+function closeFull() { $("full").classList.add("hide"); $("full").classList.remove("rot"); fullS = null; unlockScreen(); try { speechSynthesis.cancel(); } catch {} if (view === "home" || view === "list" || view === "show") render(); }
+function drawFull() {
+  const S = fullS, c = S.list[S.i], lines = [].concat(c.lines || c.zh), F = $("full");
+  F.style.setProperty("--fz", S.fz); F.classList.toggle("rot", S.rot);
+  F.innerHTML = `<div class="ftop"><button class="fb" data-f="close">✕</button><span class="fpos">${S.list.length > 1 ? (S.i + 1) + " / " + S.list.length : ""}</span><button class="fb${isFav(c) ? " on" : ""}" data-f="fav">${isFav(c) ? "★" : "☆"}</button></div>
+    <div class="fbody"><div class="zh">${lines.map(esc).join("<br>")}</div>
+    <div class="s">${esc(c.py || "")}</div><div class="cy2">${esc(c.cy || "")}</div><div class="s">${esc(c.ru || "")}</div></div>
+    <div class="fbot"><button class="fb" data-f="minus">A−</button><button class="fb" data-f="plus">A+</button><button class="fb${S.rot ? " on" : ""}" data-f="rot">⟳ Поворот</button><button class="fb" data-f="say">🔊</button></div>`;
+}
+$("full").onclick = e => {
+  const b = e.target.closest("[data-f]"); if (!b || !fullS) return; const k = b.dataset.f, c = fullS.list[fullS.i];
+  if (k === "close") return closeFull();
+  if (k === "fav") toggleFav({...c, zh: [].concat(c.lines || c.zh)});
+  if (k === "plus") fullS.fz = Math.min(2.2, +(fullS.fz + .15).toFixed(2));
+  if (k === "minus") fullS.fz = Math.max(.6, +(fullS.fz - .15).toFixed(2));
+  if (k === "plus" || k === "minus") store.set("fz", fullS.fz);
+  if (k === "rot") fullS.rot = !fullS.rot;
+  if (k === "say") say([].concat(c.lines || c.zh).join(""));
+  drawFull();
+};
+function fullStep(d) { if (!fullS || fullS.list.length < 2) return; fullS.i = (fullS.i + d + fullS.list.length) % fullS.list.length; drawFull(); }
+// свайпы: универсальный обработчик (горизонтальный жест, без конфликта с вертикальной прокруткой)
+function onSwipe(el, fn) {
+  let x0 = null, y0 = 0;
+  el.addEventListener("touchstart", e => { if (e.touches.length === 1) { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; } }, {passive: true});
+  el.addEventListener("touchend", e => {
+    if (x0 === null) return; const t = e.changedTouches[0]; let dx = t.clientX - x0, dy = t.clientY - y0; x0 = null;
+    if (el === $("full") && fullS && fullS.rot) [dx, dy] = [dy, -dx];
+    if (Math.abs(dx) > 60 && Math.abs(dx) > 1.5 * Math.abs(dy)) fn(dx > 0 ? 1 : -1);
+  }, {passive: true});
+}
+onSwipe($("full"), d => fullStep(-d));
+document.addEventListener("keydown", e => {
+  if (fullS) { if (e.key === "Escape") closeFull(); if (e.key === "ArrowRight") fullStep(1); if (e.key === "ArrowLeft") fullStep(-1); return; }
+  if (view === "learn" && cur) { if (e.key === " ") { e.preventDefault(); $("fc").click(); } if (e.key === "ArrowRight") mark(true); if (e.key === "ArrowLeft") mark(false); }
+  if (e.key === "/" && document.activeElement.tagName !== "INPUT") { e.preventDefault(); go("home", true); setTimeout(() => $("hq") && $("hq").focus(), 0); }
+});
 
 // ---- flashcards
-let cur = null, flipped = false;
+let cur = null, flipped = false, again = [];
 function nextCard() {
-  const cs = cards(); const pending = cs.filter(c => !known[c.id]);
-  const pool = pending.length ? pending : cs;
-  cur = pool[Math.floor(Math.random() * pool.length)]; flipped = false; drawCard();
+  const cs = cards();
+  // порядок: ошибки этой сессии (через 3 карточки) → к повторению → новые → «всё выучено» случайно
+  const due = cs.filter(isDue), fresh = cs.filter(isNew);
+  let pool = due.length ? due : fresh.length ? fresh : cs;
+  if (again.length && (again[0].wait-- <= 0 || (!due.length && !fresh.length))) { const id = again.shift().id; const c = cs.find(x => x.id === id); if (c) { cur = c; flipped = false; return drawCard(); } }
+  pool = pool.filter(c => c !== cur || pool.length === 1);
+  cur = pool.length ? pool[Math.floor(Math.random() * pool.length)] : null; flipped = false; drawCard();
 }
 function drawCard() {
-  const cs = cards(); const k = cs.filter(c => known[c.id]).length;
-  $("lstat").textContent = `Выучено ${k} из ${cs.length}` + (k === cs.length ? " — колода пройдена" : "");
+  const cs = cards(), k = cs.filter(isLearned).length, d = cs.filter(isDue).length, n = cs.filter(isNew).length;
+  $("lstat").innerHTML = `<span>К повторению <b>${d}</b></span>·<span>новых <b>${n}</b></span>·<span>выучено <b>${k}</b> из ${cs.length}</span>`;
   $("lbar").style.width = (cs.length ? 100 * k / cs.length : 0) + "%";
-  if (!cur) return;
+  if (!cur) { $("fc").innerHTML = `<div class="muted">${cs.length ? "" : "Колода пуста — добавьте фразы в избранное звёздочкой ☆"}</div>`; return; }
   const rev = $("rev").checked;
   const front = rev ? `<div class="ru" style="font-size:24px">${esc(cur.ru)}</div>` : `<div class="zh">${esc(cur.zh)}</div>`;
   const back = rev ? `<div class="zh">${esc(cur.zh)}</div><div class="py">${esc(cur.py)}</div><div class="cy">${esc(cur.cy)}</div>`
@@ -252,12 +453,19 @@ function drawCard() {
   $("fc").innerHTML = front + (flipped ? back : `<div class="hint muted">нажмите — перевернуть</div>`) + `<div class="hint muted">${esc(cur.deck)}</div>`;
 }
 $("fc").onclick = () => { flipped = !flipped; drawCard(); if (flipped) say(cur.zh); };
-function mark(ok) { if (ok) known[cur.id] = 1; else delete known[cur.id]; store.set("known", known); nextCard(); }
+function mark(ok) {
+  if (!cur) return;
+  const s = srs[cur.id] || {b: 0, due: 0};
+  if (ok) { s.b = Math.min(IVL.length - 1, s.b + 1); s.due = today() + IVL[s.b] * DAY; again = again.filter(a => a.id !== cur.id); }
+  else { s.b = 1; s.due = today(); if (!again.some(a => a.id === cur.id)) again.push({id: cur.id, wait: 3}); }
+  srs[cur.id] = s; store.set("srs", srs); nextCard();
+}
 $("bYes").onclick = () => mark(true);
 $("bNo").onclick = () => mark(false);
 $("bSay").onclick = () => cur && say(cur.zh);
-$("bReset").onclick = () => { cards().forEach(c => delete known[c.id]); store.set("known", known); nextCard(); };
+$("bReset").onclick = () => { if (!confirm("Сбросить прогресс этой колоды?")) return; cards().forEach(c => delete srs[c.id]); store.set("srs", srs); again = []; nextCard(); };
 $("rev").onchange = drawCard;
+onSwipe($("fc"), d => mark(d > 0));
 
 // ---- quiz
 let q = null, score = {ok: 0, n: 0};
@@ -291,14 +499,20 @@ function drawList() {
   const s = norm($("q").value.trim());
   const cs = cards().filter(c => !s || c.zh.includes($("q").value.trim()) || norm(c.py).includes(s) || norm(c.cy).includes(s) || norm(c.ru).includes(s));
   let html = "", last = "";
-  for (const c of cs) {
+  listShown = cs;
+  cs.forEach((c, i) => {
     if (c.deck !== last) { html += `<h2>${esc(c.deck)}</h2>`; last = c.deck; }
-    html += `<div class="item"><div class="zh">${esc(c.zh)}</div><div class="t"><div class="py">${esc(c.py)}</div><div class="cy">${esc(c.cy)}</div><div>${esc(c.ru)}</div></div><button class="say" data-z="${esc(c.zh)}">🔊</button></div>`;
-  }
+    html += `<div class="item${c.zh.length > 5 ? " long" : ""}" data-i="${i}"><div class="zh">${esc(c.zh)}</div><div class="t"><div class="py">${esc(c.py)}</div><div class="cy">${esc(c.cy)}</div><div>${esc(c.ru)}</div></div><button class="fav${isFav(c) ? " on" : ""}" data-fv="${i}">${isFav(c) ? "★" : "☆"}</button><button class="say" data-z="${esc(c.zh)}">🔊</button></div>`;
+  });
   $("list").innerHTML = html || "<p class='muted'>Ничего не найдено</p>";
 }
+let listShown = [];
 $("q").oninput = drawList;
-$("list").onclick = e => { const b = e.target.closest(".say"); if (b) say(b.dataset.z); };
+$("list").onclick = e => {
+  const b = e.target.closest(".say"); if (b) return say(b.dataset.z);
+  const f = e.target.closest("[data-fv]"); if (f) { const on = toggleFav(listShown[+f.dataset.fv]); f.classList.toggle("on", on); f.textContent = on ? "★" : "☆"; return; }
+  const it = e.target.closest("[data-i]"); if (it) openFull(listShown[+it.dataset.i], listShown, +it.dataset.i);
+};
 
 // ---- syllables
 $("tips").innerHTML = DATA.tips.map(([a, b]) => `<div><b class="cy">${esc(a)}</b> — ${esc(b)}</div>`).join("");
@@ -576,8 +790,282 @@ function drawGuide() {
   };
 }
 
-$("deck").onchange = () => { store.set("deck", $("deck").value); cur = null; render(); };
+// ---- поездка: города, отели, вокзалы (хранится только на устройстве)
+function trips() {
+  let t = store.get("trips", null);
+  if (!t) {
+    const h = DATA.hotel;
+    t = [{id: "t1", city: "Пекин", from: "", to: "", hotel: h.name_zh, addr: h.addr_zh, phone: h.phone, station: "", note: h.metro_zh, example: true}];
+    store.set("trips", t);
+  }
+  return t;
+}
+const byFrom = (a, b) => (a.from || "9") < (b.from || "9") ? -1 : 1;
+function curStop() {
+  const all = trips().slice().sort(byFrom); if (!all.length) return null;
+  const t = isoDay(today()); let c = null;
+  for (const s of all) if (s.from && s.from <= t) c = s;
+  return c || all[0];
+}
+function tripLine() {
+  const all = trips().filter(s => s.from).sort(byFrom), s = curStop();
+  if (!all.length) return s && s.city ? s.city : "Разговорник в дорогу";
+  const d = Math.round((today() - parseDay(all[0].from)) / DAY);
+  const last = all[all.length - 1], end = parseDay(last.to);
+  if (end && today() > end) return "Поездка завершена";
+  return (d < 0 ? `До поездки ${-d} дн.` : `День ${d + 1} поездки`) + (s && s.city ? " · " + s.city : "");
+}
+let tripEdit = null;
+function drawTrips() {
+  const box = $("v-trips"), all = trips().slice().sort(byFrom), c = curStop();
+  if (tripEdit) {
+    const s = tripEdit;
+    box.innerHTML = `<button class="back" data-a="cancel">‹ Поездка</button><div class="form">
+      <label>Город (по-русски)</label><input id="tf-city" value="${esc(s.city || "")}" placeholder="Шанхай">
+      <div class="two"><div><label>Заезд</label><input type="date" id="tf-from" value="${esc(s.from || "")}"></div><div><label>Выезд</label><input type="date" id="tf-to" value="${esc(s.to || "")}"></div></div>
+      <label>Отель — название иероглифами</label><input id="tf-hotel" lang="zh" value="${esc(s.hotel || "")}">
+      <label>Адрес отеля иероглифами</label><textarea id="tf-addr" lang="zh" rows="2">${esc(s.addr || "")}</textarea>
+      <label>Телефон отеля</label><input id="tf-phone" type="tel" value="${esc(s.phone || "")}" placeholder="+86 …">
+      <label>Вокзал отправления в следующий город (иероглифами)</label><input id="tf-station" lang="zh" list="stlist" value="${esc(s.station || "")}">
+      <datalist id="stlist">${DATA.stations.map(x => `<option value="${esc(x[0])}">${esc(x[3])}</option>`).join("")}</datalist>
+      <label>Заметка (метро рядом, ориентир)</label><input id="tf-note" value="${esc(s.note || "")}"></div>
+      <p class="muted">Название и адрес иероглифами возьмите из подтверждения брони или попросите на ресепшн написать адрес. Из этих полей соберутся карточки «Такси → отель» и «Такси → вокзал» во вкладке «Показать».</p>
+      <div class="row"><button class="btn yes" data-a="save">Сохранить</button></div>
+      ${s.id ? `<div class="row"><button class="btn" data-a="del">Удалить город</button></div>` : ""}`;
+  } else {
+    box.innerHTML = `<p class="muted">Города поездки с отелем и вокзалом. Текущий город выбирается по дате заезда; его отель и вокзал попадают в карточки для такси. Данные хранятся только на этом устройстве.</p>` +
+      all.map(s => `<button class="li" data-t="${esc(s.id)}"><span class="n">🏨</span><span class="tt"><div>${esc(s.city || "Без названия")}${s === c ? `<span class="cur">сейчас</span>` : ""}</div><div class="muted">${esc([s.from, s.to].filter(Boolean).join(" → ") || "даты не указаны")}</div><div class="muted" lang="zh">${esc(s.hotel || "отель не указан")}</div>${s.example ? `<div class="muted">Пример — отредактируйте под свою поездку</div>` : ""}</span><span class="st">›</span></button>`).join("") +
+      `<button class="btn yes big" data-a="add">+ Добавить город</button>`;
+  }
+  box.onclick = e => {
+    const t = e.target.closest("[data-t]"); if (t) { tripEdit = {...trips().find(s => s.id === t.dataset.t)}; drawTrips(); window.scrollTo(0, 0); return; }
+    const a = e.target.closest("[data-a]"); if (!a) return; const k = a.dataset.a;
+    if (k === "add") { const prev = all[all.length - 1]; tripEdit = {from: prev && prev.to ? prev.to : ""}; }
+    if (k === "cancel") tripEdit = null;
+    if (k === "save") {
+      const v = id => $("tf-" + id).value.trim();
+      const s = {id: tripEdit.id || "t" + Date.now(), city: v("city"), from: v("from"), to: v("to"), hotel: v("hotel"), addr: v("addr"), phone: v("phone"), station: v("station"), note: v("note")};
+      const list = trips().filter(x => x.id !== s.id); list.push(s); store.set("trips", list); tripEdit = null;
+    }
+    if (k === "del" && confirm("Удалить этот город?")) { store.set("trips", trips().filter(x => x.id !== tripEdit.id)); tripEdit = null; }
+    drawTrips(); window.scrollTo(0, 0);
+  };
+}
+
+// ---- мои фразы: запрос в приложение Claude (по подписке) → вставка ответа → офлайн
+let myAsk = "", myPaste = "", myParsed = null;
+function claudePrompt(q) {
+  return `Я турист в Китае и не говорю по-китайски. Как сказать по-китайски (путунхуа, разговорный вариант): «${q}»?\n\n` +
+    `Ответь только строками формата\n汉字 | pinyin | русский\n\n` +
+    `Правила: pinyin с тонами; слоги одного слова пиши слитно (wǒmen, xǐshǒujiān), слова через пробел; ` +
+    `изменения тонов уже проставь (bú yào, yíxià, yìdiǎn). Дай 1–3 варианта (короткий и вежливый), ` +
+    `затем 1–2 самых вероятных ответа собеседника — пометь их в русском переводе «(слышите)». Без пояснений и без markdown.`;
+}
+function parseMy(text) {
+  const out = [];
+  for (let line of String(text).split(/\r?\n/)) {
+    line = line.replace(/^\s*(?:[-*•]|\d+[.)])\s*/, "").replace(/`/g, "").trim();
+    const parts = line.split(/\s*[|｜]\s*/).map(x => x.trim()).filter(Boolean);
+    if (parts.length < 3 || !/[㐀-鿿]/.test(parts[0])) continue;
+    const [zh, py, ...ru] = parts;
+    const bad = (py.match(/[A-Za-zÀ-ɏ']+/g) || []).filter(w => wordCyr(w) === null && !/^[A-Z]+$|^WiFi$/.test(w));
+    out.push({zh, py, ru: ru.join(" | "), cy: toCyr(py), bad});
+  }
+  return out;
+}
+function drawMy() {
+  const box = $("v-my"), on = navigator.onLine, mine = ALL.filter(c => c.deck === MY);
+  let h = `<p class="muted">Нет нужной фразы в разговорнике? Спросите Claude в приложении (по вашей подписке) и вставьте ответ: фраза сохранится на iPhone и будет доступна офлайн — в поиске, карточках и показе крупно. Кириллицу тренажёр посчитает сам.</p>
+  <div class="form"><label>1. Что нужно сказать (по-русски)</label><textarea id="my-ask" rows="2" placeholder="у меня аллергия на арахис">${esc(myAsk)}</textarea></div>
+  <div class="row"><button class="btn yes" data-m="ask">Спросить Claude</button></div>
+  <p class="muted">${on ? "Запрос скопируется в буфер и откроется Claude. Если поле ввода там пустое — вставьте запрос." : "Нужен интернет (из Китая — через VPN)."}</p>
+  <div class="form"><label>2. Ответ Claude — строки «汉字 | pinyin | русский»</label><textarea id="my-paste" rows="4" lang="zh">${esc(myPaste)}</textarea></div>
+  <div class="row"><button class="btn" data-m="paste">Вставить из буфера</button><button class="btn" data-m="parse">Разобрать</button></div>`;
+  if (myParsed) {
+    h += myParsed.length ? `<h2>Будет добавлено: ${myParsed.length}</h2>` + myParsed.map(c => `<div class="item${c.zh.length > 5 ? " long" : ""}"><div class="zh">${esc(c.zh)}</div><div class="t"><div class="py">${esc(c.py)}</div><div class="cy">${esc(c.cy)}</div><div>${esc(c.ru)}</div>${c.bad.length ? `<div class="note" style="color:var(--acc)">не разобран pinyin: ${esc(c.bad.join(", "))} — для этих слов кириллицы нет</div>` : ""}</div></div>`).join("") +
+      `<div class="row"><button class="btn yes" data-m="save">Сохранить</button><button class="btn" data-m="cancel">Отмена</button></div>`
+      : `<div class="why">Не нашёл строк формата «汉字 | pinyin | русский». Попросите Claude ответить в этом формате.</div>`;
+  }
+  h += `<h2>Сохранено: ${mine.length}</h2>` + (mine.length ? mine.map((c, i) => `<div class="item${c.zh.length > 5 ? " long" : ""}" data-mi="${i}"><div class="zh">${esc(c.zh)}</div><div class="t"><div class="py">${esc(c.py)}</div><div class="cy">${esc(c.cy)}</div><div>${esc(c.ru)}</div></div><button class="say" data-z="${esc(c.zh)}">🔊</button><button class="fav" data-del="${i}" aria-label="Удалить">✕</button></div>`).join("") : `<p class="muted">Пока пусто.</p>`);
+  box.innerHTML = h;
+  $("my-ask").oninput = e => { myAsk = e.target.value; };
+  $("my-paste").oninput = e => { myPaste = e.target.value; };
+  box.onclick = e => {
+    const d = e.target.closest("[data-del]");
+    if (d) { const c = mine[+d.dataset.del]; if (confirm("Удалить «" + c.zh + "»?")) { myList = myList.filter(m => m.zh !== c.zh); store.set("my", myList); syncMy(); drawMy(); } return; }
+    if (e.target.closest(".say")) return;
+    const it = e.target.closest("[data-mi]"); if (it) return openFull(mine[+it.dataset.mi], mine, +it.dataset.mi);
+    const b = e.target.closest("[data-m]"); if (!b) return; const k = b.dataset.m;
+    if (k === "ask") {
+      const q = myAsk.trim(); if (!q) return $("my-ask").focus();
+      const pr = claudePrompt(q);
+      // оба вызова синхронно, пока жест пользователя «живой» — иначе iOS блокирует
+      try { navigator.clipboard.writeText(pr).catch(() => {}); } catch {}
+      window.open("https://claude.ai/new?q=" + encodeURIComponent(pr), "_blank", "noopener");
+      return;
+    }
+    if (k === "paste") {
+      if (!navigator.clipboard || !navigator.clipboard.readText) return $("my-paste").focus();
+      navigator.clipboard.readText().then(t => { myPaste = t; myParsed = parseMy(t); drawMy(); }).catch(() => $("my-paste").focus());
+      return;
+    }
+    if (k === "parse") myParsed = parseMy(myPaste);
+    if (k === "cancel") myParsed = null;
+    if (k === "save" && myParsed) {
+      for (const c of myParsed) { myList = myList.filter(m => m.zh !== c.zh); myList.push({zh: c.zh, py: c.py, ru: c.ru, t: Date.now()}); }
+      store.set("my", myList); syncMy(); myParsed = null; myPaste = ""; myAsk = "";
+    }
+    drawMy();
+  };
+}
+
+// ---- главная и поиск по всему
+let homeQ = "";
+function searchAll(raw) {
+  const q = raw.trim(), s = norm(q), s0 = s.replace(/[\s'-]/g, "");
+  const hit = (...xs) => xs.some(x => x && (String(x).includes(q) || norm(x).includes(s) || norm(x).replace(/[\s'-]/g, "").includes(s0)));
+  const seen = new Set(), ph = [];
+  const sc = showCards().map(c => ({...c, zh: c.zh.join(""), lines: c.zh, deck: "Показать"}));
+  for (const c of [...sc, ...favCards(), ...ALL]) {
+    if (seen.has(c.zh + "|" + c.ru)) continue;
+    if (hit(c.zh, c.py, c.cy, c.ru)) { seen.add(c.zh + "|" + c.ru); ph.push(c); }
+  }
+  const starts = c => norm(c.ru).startsWith(s) || norm(c.py).startsWith(s) || c.zh.startsWith(q) ? 0 : 1;
+  ph.sort((a, b) => starts(a) - starts(b));
+  return {
+    ph: ph.slice(0, 60), more: Math.max(0, ph.length - 60),
+    gd: DATA.guide.map((g, i) => ({g, i})).filter(x => hit(x.g.title, ...x.g.points)),
+    les: DATA.lessons.filter(l => hit(l.title, l.goal)),
+    dlg: DATA.dialogs.map((d, i) => ({d, i})).filter(x => hit(x.d.title, x.d.intro)),
+  };
+}
+let homeRes = [];
+function drawHomeRes() {
+  const r = searchAll(homeQ); homeRes = r.ph;
+  let h = "";
+  if (r.ph.length) {
+    h += `<h2>Фразы и вывески</h2>` + r.ph.map((c, i) => `<div class="ritem" data-ri="${i}"><div class="t"><div class="zh">${esc(c.zh)}</div><div class="m"><span class="py">${esc(c.py || "")}</span> · <span class="cy">${esc(c.cy || "")}</span></div><div class="m">${esc(c.ru)} <span class="muted">· ${esc(c.deck)}</span></div></div><button class="fav${isFav(c) ? " on" : ""}" data-fv="${i}">${isFav(c) ? "★" : "☆"}</button></div>`).join("");
+    if (r.more) h += `<p class="muted">…и ещё ${r.more}. Уточните запрос.</p>`;
+  }
+  if (r.gd.length) h += `<h2>Справка</h2>` + r.gd.map(x => `<button class="rlink" data-go-gd="${x.i}">${esc(x.g.title)}</button>`).join("");
+  if (r.les.length) h += `<h2>Уроки</h2>` + r.les.map(l => `<button class="rlink" data-go-les="${l.n}">Урок ${l.n}. ${esc(l.title)}<small>${esc(l.goal)}</small></button>`).join("");
+  if (r.dlg.length) h += `<h2>Диалоги</h2>` + r.dlg.map(x => `<button class="rlink" data-go-dlg="${x.i}">${esc(x.d.title)}<small>${esc(x.d.intro)}</small></button>`).join("");
+  if (!h) h = `<p class="muted" style="margin-top:14px">Ничего не найдено. Ищите по-русски, pinyin (можно без тонов), кириллицей или иероглифами.</p>`;
+  h += `<button class="blk" data-ask="1" style="margin-top:14px"><div class="lbl">Нет нужной фразы?</div><div class="big2">Спросить Claude: «${esc(homeQ.trim())}»</div><div class="muted">Ответ сохраните в «Мои фразы» — будет работать офлайн</div></button>`;
+  $("hres").innerHTML = h;
+}
+function openLesson(n) { lesState = {l: DATA.lessons[n - 1], mode: "theory"}; go("les"); }
+function openDialog(i) { dlg = {d: DATA.dialogs[i], idx: i, step: 0, log: [], errors: 0}; advanceDlg(); go("dlg"); }
+function dayPhrase() {
+  const pool = ALL.filter(c => c.deck.startsWith("Фразы") && !/слышите|спросят/.test(c.ru));
+  return pool[Math.floor(today() / DAY) % pool.length];
+}
+function drawHome() {
+  const box = $("v-home");
+  if (!$("hq")) {
+    box.innerHTML = `<div class="hero"><h1><span>你好</span> · Китайский</h1><span class="net" id="net"><i></i></span></div><div class="sub" id="hsub"></div>
+      <input type="search" id="hq" placeholder="Найти: «вода», «shui», «туалет», 水…" autocomplete="off" enterkeyhint="search">
+      <div id="hres" class="res"></div><div id="hbody"></div>`;
+    $("hq").oninput = () => { homeQ = $("hq").value; drawHome(); };
+    box.onclick = e => {
+      const f = e.target.closest("[data-fv]"); if (f) { const on = toggleFav(homeRes[+f.dataset.fv]); f.classList.toggle("on", on); f.textContent = on ? "★" : "☆"; return; }
+      const ri = e.target.closest("[data-ri]"); if (ri) return openFull(homeRes[+ri.dataset.ri], homeRes, +ri.dataset.ri);
+      const g = e.target.closest("[data-go-gd]"); if (g) { gdOpen = +g.dataset.goGd; return go("gd"); }
+      const l = e.target.closest("[data-go-les]"); if (l) return openLesson(+l.dataset.goLes);
+      const d = e.target.closest("[data-go-dlg]"); if (d) return openDialog(+d.dataset.goDlg);
+      const sh = e.target.closest("[data-sh]"); if (sh) { const list = showCards(); const i = list.findIndex(c => c.id.endsWith(sh.dataset.sh) || c.id.startsWith("trip:" + sh.dataset.sh)); return openFull(list[Math.max(0, i)], list, Math.max(0, i)); }
+      if (e.target.closest("[data-ask]")) { myAsk = homeQ.trim(); myParsed = null; return go("my"); }
+      const a = e.target.closest("[data-h]"); if (!a) return; const k = a.dataset.h;
+      if (k === "srs") { $("deck").value = "Все"; store.set("deck", "Все"); cur = null; go("learn"); }
+      if (k === "fav") { $("deck").value = "★ Избранное"; store.set("deck", "★ Избранное"); go("list"); }
+      if (k === "trip") go("trips");
+      if (k === "show") go("show");
+      if (k === "pday") { const c = dayPhrase(); openFull(c, [c], 0); }
+      if (k === "say") say(dayPhrase().zh);
+      if (k.startsWith("les")) openLesson(+k.slice(3));
+    };
+  }
+  if ($("hq").value !== homeQ) $("hq").value = homeQ;
+  const on = navigator.onLine; $("net").className = "net" + (on ? " on" : ""); $("net").innerHTML = `<i></i>${on ? "онлайн" : "офлайн"}`;
+  $("hsub").textContent = tripLine();
+  const searching = homeQ.trim().length > 0;
+  $("hres").classList.toggle("hide", !searching); $("hbody").classList.toggle("hide", searching);
+  if (searching) return drawHomeRes();
+  const pool = [...ALL, ...favCards().filter(f => !ALL.some(c => c.id === f.id))];
+  const due = pool.filter(isDue).length, fresh = pool.filter(isNew).length;
+  const best = lesBest(), next = DATA.lessons.find(l => best[l.n] == null);
+  const p = dayPhrase(), fv = favCards(), s = curStop();
+  let h = `<div class="quick"><button class="qk main" data-sh="taxi"><b>🚕</b>Такси${s && s.hotel ? " в отель" : ""}</button><button class="qk" data-sh="nochinese"><b>🗣</b>Не говорю</button><button class="qk" data-sh="help"><b>🆘</b>Помощь</button></div>`;
+  h += `<button class="blk" data-h="srs"><div class="lbl">Карточки</div><div class="big2">${due ? `Повторить ${due}` : fresh ? "Учить новые" : "Всё повторено"}</div><div class="muted">${due ? "карточек ждут повторения сегодня · " : ""}новых ${fresh} из ${pool.length}</div></button>`;
+  h += next ? `<button class="blk" data-h="les${next.n}"><div class="lbl">Урок ${next.n} из ${DATA.lessons.length}</div><div class="big2">${esc(next.title)}</div><div class="muted">~${next.min} мин · ${next.ex.length} упражнений</div></button>`
+            : `<button class="blk" data-h="les1"><div class="lbl">Уроки</div><div class="big2">Все 8 уроков пройдены</div><div class="muted">Повторите любой — ошибки можно прорешать отдельно</div></button>`;
+  h += `<div class="blk" data-h="pday"><div class="lbl">Фраза дня</div><div style="display:flex;gap:10px;align-items:center"><div style="flex:1"><div class="zh">${esc(p.zh)}</div><div><span class="py">${esc(p.py)}</span> · <span class="cy">${esc(p.cy)}</span></div><div>${esc(p.ru)}</div></div><button class="say" data-h="say">🔊</button></div></div>`;
+  if (fv.length) h += `<button class="blk" data-h="fav"><div class="lbl">Избранное · ${fv.length}</div><div class="zh" style="font-size:20px">${fv.slice(0, 6).map(f => esc(f.zh)).join(" · ")}</div></button>`;
+  h += `<button class="blk" data-h="trip"><div class="lbl">Поездка</div><div class="big2">${esc(s ? (s.city || "Город") : "Добавить город")}</div><div class="muted" lang="zh">${esc(s && s.hotel ? s.hotel : "Отель и вокзал → карточки для такси")}</div></button>`;
+  h += `<p class="muted" style="text-align:center;font-size:12px">Работает без интернета · версия ${esc(DATA.built)}</p>`;
+  $("hbody").innerHTML = h;
+}
+window.addEventListener("online", () => view === "home" && drawHome());
+window.addEventListener("offline", () => view === "home" && drawHome());
+
+// ---- настройки: тема, резервная копия, версия
+function setTheme(t) { store.set("theme", t); if (t === "auto") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t; }
+async function exportData() {
+  const data = {};
+  for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k.startsWith("cn:")) data[k] = localStorage.getItem(k); }
+  const text = JSON.stringify({app: "cn-trainer", ver: DATA.built, saved: new Date().toISOString(), data}, null, 1);
+  const name = "cn-trainer-" + isoDay(Date.now()) + ".json";
+  try {
+    const file = new File([text], name, {type: "application/json"});
+    if (navigator.canShare && navigator.canShare({files: [file]})) { await navigator.share({files: [file], title: name}); return; }
+  } catch (e) { if (e && e.name === "AbortError") return; }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], {type: "application/json"})); a.download = name;
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+function importData(file) {
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const j = JSON.parse(r.result);
+      if (j.app !== "cn-trainer" || !j.data) throw new Error("не похоже на копию тренажёра");
+      if (!confirm(`Восстановить копию от ${String(j.saved).slice(0, 10)}? Текущий прогресс будет заменён.`)) return;
+      for (const k of Object.keys(localStorage)) if (k.startsWith("cn:")) localStorage.removeItem(k);
+      for (const [k, v] of Object.entries(j.data)) if (k.startsWith("cn:")) localStorage.setItem(k, v);
+      location.reload();
+    } catch (e) { alert("Не удалось восстановить: " + e.message); }
+  };
+  r.readAsText(file);
+}
+function drawSettings() {
+  const t = store.get("theme", "auto"), seg = (v, l) => `<button data-th="${v}" class="${t === v ? "on" : ""}">${l}</button>`;
+  const used = Object.keys(localStorage).filter(k => k.startsWith("cn:")).reduce((n, k) => n + localStorage.getItem(k).length, 0);
+  $("v-set").innerHTML = `<h2 style="margin-top:4px">Тема</h2><div class="seg">${seg("auto", "Как в системе")}${seg("light", "Светлая")}${seg("dark", "Тёмная")}</div>
+    <h2>Резервная копия</h2><p class="muted">Прогресс, избранное и поездка хранятся только на этом iPhone (${Math.ceil(used / 1024)} КБ). Сохраните копию в «Файлы» перед переустановкой или сменой телефона.</p>
+    <div class="row"><button class="btn" data-s="exp">Сохранить копию</button><button class="btn" data-s="imp">Восстановить</button></div><input type="file" id="impf" accept="application/json,.json" class="hide">
+    <h2>Обновление</h2><p class="muted">Версия ${esc(DATA.built)} (${esc(DATA.ver)}). При интернете новая версия скачивается сама — появится кнопка «Обновить».</p>
+    <div class="row"><button class="btn" data-s="upd">Проверить сейчас</button></div><div class="muted" id="updst"></div>
+    <h2>О приложении</h2><p class="muted">Открытый проект: <a href="https://github.com/aleksandrkaiser/cn-trainer" target="_blank" rel="noopener" style="color:var(--cy)">github.com/aleksandrkaiser/cn-trainer</a> · <a href="China_razgovornik.pdf" target="_blank" style="color:var(--cy)">PDF-версия</a> · лицензия MIT.</p>
+    <div class="row"><button class="btn" data-s="reset" style="font-size:14px">Сбросить весь прогресс</button></div>`;
+  $("v-set").onclick = e => {
+    const th = e.target.closest("[data-th]"); if (th) { setTheme(th.dataset.th); return drawSettings(); }
+    const b = e.target.closest("[data-s]"); if (!b) return; const k = b.dataset.s;
+    if (k === "exp") exportData();
+    if (k === "imp") $("impf").click();
+    if (k === "upd") { $("updst").textContent = navigator.onLine ? "Проверяю…" : "Нет интернета."; if (swReg && navigator.onLine) swReg.update().then(() => { setTimeout(() => { if ($("updst")) $("updst").textContent = $("upd").classList.contains("hide") ? "Установлена последняя версия." : "Есть новая версия — нажмите «Обновить» внизу."; }, 2500); }).catch(() => { $("updst").textContent = "Не удалось проверить."; }); }
+    if (k === "reset" && confirm("Сбросить прогресс уроков, диалогов, карточек и избранное? Поездка сохранится.")) {
+      for (const key of ["srs", "known", "les", "dlg", "favs"]) localStorage.removeItem("cn:" + key);
+      location.reload();
+    }
+  };
+  $("impf").onchange = e => e.target.files[0] && importData(e.target.files[0]);
+}
+
+$("deck").onchange = () => { store.set("deck", $("deck").value); cur = null; again = []; render(); };
 function render() {
+  if (view === "home") drawHome();
+  if (view === "trips") drawTrips();
+  if (view === "my") drawMy();
+  if (view === "set") drawSettings();
   if (view === "show") drawShows();
   if (view === "les") drawLessons();
   if (view === "dlg") drawDialogs();
@@ -590,9 +1078,16 @@ function render() {
 $("deck").parentElement.classList.add("hide");
 render();
 
+// ---- офлайн-кэш и обновления: новая версия ставится в фоне, страница предлагает перезапуск
+let swReg = null;
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  const hadCtrl = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener("controllerchange", () => { if (hadCtrl) $("upd").classList.remove("hide"); });
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").then(r => { swReg = r; if (navigator.onLine) r.update().catch(() => {}); }).catch(() => {}));
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && swReg && navigator.onLine) swReg.update().catch(() => {}); });
 }
+$("updgo").onclick = () => location.reload();
+try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch {}
 </script>
 </body>
 </html>

@@ -56,14 +56,38 @@ def dialog_json(d):
     return dict(d, steps=steps)
 
 guide = [dict(g, phrases=[[z, p, to_cyr(p), r] for z, p, r in g["phrases"]]) for g in GUIDE]
+SITE = "https://aleksandrkaiser.github.io/cn-trainer/"
+trip = {k: [v[0], v[1], to_cyr(v[1])] if isinstance(v, tuple) else v for k, v in TRIP_CARDS.items()}
 data = {"phrases": ph, "signs": signs, "numbers": nums, "stations": st, "show": show, "tips": TIPS, "syllables": syl,
         "lessons": [lesson_json(l) for l in LESSONS], "dialogs": [dialog_json(d) for d in DIALOGS],
-        "guide": guide, "checked": CHECKED}
-html = open(os.path.join(SRC, "pwa_template.html"), encoding="utf-8").read().replace("__DATA__", json.dumps(data, ensure_ascii=False))
+        "guide": guide, "checked": CHECKED, "hotel": HOTEL, "trip": trip}
+tpl = open(os.path.join(SRC, "pwa_template.html"), encoding="utf-8").read()
+# версия = хеш шаблона и данных; дата сборки — дата последнего изменения контента (стабильна при пересборке без правок)
+body = json.dumps(data, ensure_ascii=False, sort_keys=True)
+data["ver"] = hashlib.sha1((tpl + body).encode()).hexdigest()[:8]
+stamp_file = os.path.join(SRC, ".build_stamp")
+prev = open(stamp_file).read().split() if os.path.exists(stamp_file) else ["", ""]
+if prev[0] == data["ver"]:
+    data["built"] = prev[1]
+else:
+    import datetime
+    data["built"] = datetime.date.today().isoformat()
+    open(stamp_file, "w").write(data["ver"] + " " + data["built"] + "\n")
+n_phr = sum(len(v) for v in PHRASES.values())
+jsonld = {"@context": "https://schema.org", "@type": "WebApplication", "name": "Китайский для туриста",
+          "url": SITE, "inLanguage": "ru", "applicationCategory": "EducationalApplication", "operatingSystem": "iOS, Android, любой браузер",
+          "isAccessibleForFree": True, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "RUB"},
+          "description": f"Офлайн-разговорник китайского для туристов: {n_phr} фраз, {len(SIGNS)} вывесок, {len(LESSONS)} уроков, {len(DIALOGS)} диалогов, справочник о жизни в Китае. Pinyin и произношение кириллицей.",
+          "codeRepository": "https://github.com/aleksandrkaiser/cn-trainer", "license": "https://opensource.org/licenses/MIT"}
+html = (tpl.replace("__DATA__", json.dumps(data, ensure_ascii=False))
+           .replace("__JSONLD__", json.dumps(jsonld, ensure_ascii=False))
+           .replace("__SITE__", SITE))
 open(os.path.join(OUT, "index.html"), "w", encoding="utf-8").write(html)
 
-manifest = {"name": "Китайский: разговорник", "short_name": "Китайский", "start_url": "./", "scope": "./",
+manifest = {"id": "./", "name": "Китайский: разговорник", "short_name": "Китайский", "start_url": "./", "scope": "./",
+            "description": "Офлайн-разговорник и тренажёр китайского для туриста",
             "display": "standalone", "background_color": "#faf8f5", "theme_color": "#b3261e", "lang": "ru",
+            "categories": ["education", "travel"],
             "icons": [{"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
                       {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"}]}
 open(os.path.join(OUT, "manifest.webmanifest"), "w", encoding="utf-8").write(json.dumps(manifest, ensure_ascii=False, indent=1))
@@ -79,4 +103,10 @@ self.addEventListener("fetch", e => {{
 }});
 """
 open(os.path.join(OUT, "sw.js"), "w").write(sw)
+# robots.txt здесь бесполезен: краулеры читают его только из корня домена (aleksandrkaiser.github.io/robots.txt).
+# sitemap.xml подаётся вручную в Google Search Console / Яндекс.Вебмастер.
+open(os.path.join(OUT, "sitemap.xml"), "w").write(
+    '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    f'  <url><loc>{SITE}</loc><lastmod>{data["built"]}</lastmod></url>\n'
+    f'  <url><loc>{SITE}China_razgovornik.pdf</loc><lastmod>{data["built"]}</lastmod></url>\n</urlset>\n')
 print("built", ver, len(html), "bytes")
