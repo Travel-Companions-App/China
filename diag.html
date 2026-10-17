@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Диагностика звука</title>
+<style>
+:root{--bg:#faf8f5;--fg:#1c1b1a;--muted:#6b6660;--line:#e3ddd5;--card:#fff;--acc:#b3261e}
+@media (prefers-color-scheme:dark){:root{--bg:#141312;--fg:#efeae3;--muted:#a39d95;--line:#33302c;--card:#1f1e1c;--acc:#ff6b5e}}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.4 -apple-system,system-ui,sans-serif;padding:calc(12px + env(safe-area-inset-top)) 16px 40px}
+h1{font-size:20px;margin:0 0 6px}
+p{color:var(--muted);font-size:14px;margin:0 0 12px}
+button{display:block;width:100%;text-align:left;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:12px;padding:13px 14px;font:inherit;margin-bottom:8px}
+button b{color:var(--acc);margin-right:6px}
+#env,#log{font:13px/1.45 ui-monospace,Menlo,monospace;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;white-space:pre-wrap;word-break:break-word}
+#log{min-height:120px;margin-top:8px}
+</style>
+</head>
+<body>
+<h1>Диагностика звука</h1>
+<p>Включите беззвучный режим. Нажимайте кнопки по очереди, после каждой ждите 2–3 секунды. Запомните, на каких номерах был звук, и пришлите скриншот журнала внизу.</p>
+<div id="env"></div>
+<div style="margin-top:12px">
+<button id="b1"><b>1</b>Речь, как сейчас в тренажёре</button>
+<button id="b2"><b>2</b>Речь + режим «playback» (audioSession)</button>
+<button id="b3"><b>3</b>Речь + фоновый тихий звук &lt;audio&gt;</button>
+<button id="b4"><b>4</b>Речь + оба способа (2 и 3)</button>
+<button id="b5"><b>5</b>Контроль: короткий сигнал через &lt;audio&gt;</button>
+</div>
+<div id="log"></div>
+<script>
+const $ = id => document.getElementById(id);
+const t0 = performance.now();
+function log(m) { $("log").textContent += `[${((performance.now() - t0) / 1000).toFixed(1)}s] ${m}\n`; }
+
+function wavURL(seconds, freq) {
+  const rate = 22050, n = Math.floor(rate * seconds), buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+  const w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+  w(0, "RIFF"); v.setUint32(4, 36 + n * 2, true); w(8, "WAVE"); w(12, "fmt "); v.setUint32(16, 16, true);
+  v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true);
+  v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, "data"); v.setUint32(40, n * 2, true);
+  for (let i = 0; i < n; i++) v.setInt16(44 + i * 2, freq ? Math.sin(2 * Math.PI * freq * i / rate) * 9000 : 0, true);
+  return URL.createObjectURL(new Blob([buf], {type: "audio/wav"}));
+}
+const silentEl = new Audio(wavURL(1, 0)); silentEl.loop = true; silentEl.setAttribute("playsinline", "");
+const beepEl = new Audio(wavURL(0.4, 660)); beepEl.setAttribute("playsinline", "");
+
+let voices = [];
+function env() {
+  try { voices = speechSynthesis.getVoices(); } catch (e) { voices = []; }
+  const zh = voices.filter(v => /^zh/i.test(v.lang)).map(v => `${v.name} (${v.lang})`);
+  const as = navigator.audioSession;
+  $("env").textContent =
+    `speechSynthesis: ${"speechSynthesis" in window ? "есть" : "НЕТ"}\n` +
+    `голосов всего: ${voices.length}, китайских: ${zh.length}\n${zh.slice(0, 6).join("\n")}\n` +
+    `audioSession: ${as ? "есть, type=" + as.type : "НЕТ"}\n` +
+    `режим: ${matchMedia("(display-mode: standalone)").matches || navigator.standalone ? "с экрана «Домой»" : "вкладка браузера"}\n` +
+    `UA: ${navigator.userAgent}`;
+}
+try { speechSynthesis.onvoiceschanged = env; } catch (e) {}
+env(); setTimeout(env, 1000);
+
+function speak(label) {
+  try {
+    const u = new SpeechSynthesisUtterance("你好，谢谢");
+    u.lang = "zh-CN";
+    const v = voices.find(x => /zh[-_]CN/i.test(x.lang)); if (v) u.voice = v;
+    u.onstart = () => log(`${label}: речь началась`);
+    u.onend = () => log(`${label}: речь закончилась`);
+    u.onerror = e => log(`${label}: ОШИБКА речи: ${e.error}`);
+    speechSynthesis.cancel();
+    speechSynthesis.speak(u);
+    log(`${label}: speak() вызван; speaking=${speechSynthesis.speaking} pending=${speechSynthesis.pending}`);
+  } catch (e) { log(`${label}: исключение ${e.message}`); }
+}
+function setPlayback(label) {
+  if (!navigator.audioSession) { log(`${label}: audioSession не поддерживается`); return; }
+  try { navigator.audioSession.type = "playback"; log(`${label}: audioSession.type=${navigator.audioSession.type}`); }
+  catch (e) { log(`${label}: audioSession ошибка ${e.message}`); }
+}
+async function kick(label) {
+  try { await silentEl.play(); log(`${label}: тихий <audio> играет`); }
+  catch (e) { log(`${label}: тихий <audio> НЕ запустился: ${e.name}`); }
+}
+$("b1").onclick = () => speak("1");
+$("b2").onclick = () => { setPlayback("2"); speak("2"); };
+$("b3").onclick = async () => { await kick("3"); speak("3"); };
+$("b4").onclick = async () => { setPlayback("4"); await kick("4"); speak("4"); };
+$("b5").onclick = async () => {
+  try { beepEl.currentTime = 0; await beepEl.play(); log("5: сигнал <audio> запущен"); }
+  catch (e) { log(`5: сигнал НЕ запустился: ${e.name}`); }
+};
+</script>
+</body>
+</html>
