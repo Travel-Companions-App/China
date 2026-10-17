@@ -15,7 +15,50 @@ show = [dict(c, cy=to_cyr(c["py"])) for c in SHOW_CARDS]
 groups = [("Без согласного (a, e, o, y-, w-)", [""]), ("b p m f", list("bpmf")), ("d t n l", list("dtnl")),
           ("g k h", list("gkh")), ("j q x", list("jqx")), ("zh ch sh r", ["zh", "ch", "sh", "r"]), ("z c s", list("zcs"))]
 syl = [[t, [[x, syl_cyr(x)] for i in ini for x in SYLLABLES_BY_INITIAL[i].split()]] for t, ini in groups]
-data = {"phrases": ph, "signs": signs, "numbers": nums, "stations": st, "show": show, "tips": TIPS, "syllables": syl}
+from lessons import LESSONS
+from dialogs import DIALOGS
+from guide import GUIDE, CHECKED
+
+TONEMARK = {"a": "āáǎà", "e": "ēéěè", "i": "īíǐì", "o": "ōóǒò", "u": "ūúǔù", "ü": "ǖǘǚǜ"}
+def tone_variants(py):
+    """mǎi -> [māi, mái, mǎi, mài]; верный — исходный."""
+    from translit import strip_tones
+    bare = strip_tones(py).lower()
+    if "a" in bare or "e" in bare: v = "a" if "a" in bare else "e"; pos = bare.index(v)
+    elif "ou" in bare: v = "o"; pos = bare.index("o")
+    else: pos = max(i for i, ch in enumerate(bare) if ch in "iouü"); v = bare[pos]
+    return [bare[:pos] + TONEMARK[v][t] + bare[pos + 1:] for t in range(4)]
+
+def opt(o):
+    return [o[0], o[1], to_cyr(o[1])] if isinstance(o, (tuple, list)) else o
+
+def lesson_json(l):
+    th = [dict(b, cy=to_cyr(b["py"])) if b["k"] == "e" else b for b in l["theory"]]
+    ex = []
+    for e in l["ex"]:
+        e = dict(e)
+        if "py" in e: e["cy"] = to_cyr(e["py"])
+        if "opts" in e: e["opts"] = [opt(o) for o in e["opts"]]
+        if "tiles" in e: e["tiles"] = [opt(t) for t in e["tiles"]]
+        if e["t"] == "tone":
+            e["opts"] = tone_variants(e["py"]); e["ok"] = e["opts"].index(e["py"])
+        ex.append(e)
+    return dict(l, theory=th, ex=ex)
+
+def line(s):
+    return dict(s, cy=to_cyr(s["py"])) if s else None
+
+def dialog_json(d):
+    steps = []
+    for s in d["steps"]:
+        if s["who"] == "them": steps.append(line(s))
+        else: steps.append(dict(s, opts=[dict(a, cy=to_cyr(a["py"]), reply=line(a["reply"])) for a in s["opts"]]))
+    return dict(d, steps=steps)
+
+guide = [dict(g, phrases=[[z, p, to_cyr(p), r] for z, p, r in g["phrases"]]) for g in GUIDE]
+data = {"phrases": ph, "signs": signs, "numbers": nums, "stations": st, "show": show, "tips": TIPS, "syllables": syl,
+        "lessons": [lesson_json(l) for l in LESSONS], "dialogs": [dialog_json(d) for d in DIALOGS],
+        "guide": guide, "checked": CHECKED}
 html = open(os.path.join(SRC, "pwa_template.html"), encoding="utf-8").read().replace("__DATA__", json.dumps(data, ensure_ascii=False))
 open(os.path.join(OUT, "index.html"), "w", encoding="utf-8").write(html)
 

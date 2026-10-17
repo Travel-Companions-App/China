@@ -64,6 +64,43 @@ h2{font-size:13px;color:var(--acc);margin:20px 0 2px;text-transform:uppercase;le
 .syl b{font-weight:600}
 .tips div{padding:8px 0;border-bottom:1px solid var(--line);font-size:15px}
 .voice{font-size:13px;margin-top:6px}
+.li{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:8px;width:100%;font:inherit;color:var(--fg);text-align:left}
+.li .n{font-size:22px;font-weight:700;color:var(--acc);min-width:1.4em;text-align:center}
+.li .tt{flex:1}.li .tt div:first-child{font-weight:600}
+.li .st{font-size:13px;color:var(--ok);white-space:nowrap}
+.back{border:0;background:none;color:var(--acc);font:inherit;font-size:16px;padding:4px 0;margin-bottom:6px}
+.th h3{font-size:16px;margin:18px 0 6px;color:var(--acc)}
+.th p{margin:6px 0;font-size:16px}
+.ex{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line)}
+.ex .zh{font-size:22px;min-width:2.5em}
+.ex .t{flex:1;font-size:15px}
+.ex .note{font-size:13px;color:var(--muted)}
+.big{width:100%;margin-top:16px}
+.qz{font-size:clamp(30px,10vw,48px);font-weight:700;text-align:center;line-height:1.3}
+.qq{font-size:17px;margin:4px 0 8px}
+.why{margin-top:10px;font-size:15px;padding:10px 12px;border-radius:10px;background:var(--soft)}
+.opt small{display:block;color:var(--acc);font-size:13px}
+.opt .ozh{font-size:20px;font-weight:700}
+.tiles{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;min-height:56px}
+.tile{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:10px;padding:6px 10px;font:inherit;text-align:center}
+.tile b{display:block;font-size:22px}.tile small{color:var(--acc);font-size:12px}
+.ans{border:2px dashed var(--line);border-radius:12px;padding:6px;min-height:68px}
+.chat{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.bub{max-width:88%;border-radius:16px;padding:10px 12px;background:var(--card);border:1px solid var(--line)}
+.bub.me{align-self:flex-end;background:color-mix(in srgb,var(--ok) 14%,var(--card));border-color:color-mix(in srgb,var(--ok) 40%,var(--line))}
+.bub .zh{font-size:22px}
+.bub .note{font-size:13px;color:var(--muted);margin-top:2px}
+.bub .tap{font-size:13px;color:var(--muted)}
+.seg{display:flex;background:var(--soft);border-radius:10px;padding:3px;margin:4px 0 8px}
+.seg button{flex:1;border:0;background:none;border-radius:8px;padding:8px;font:inherit;font-size:14px;color:var(--fg)}
+.seg button.on{background:var(--card);font-weight:600}
+.pts li{margin:8px 0;font-size:16px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.chip{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:10px;padding:8px 10px;font:inherit;text-align:left}
+.chip b{font-size:18px;display:block}.chip small{display:block;color:var(--muted);font-size:12px}
+.src{font-size:13px;color:var(--muted);margin-top:16px}
+.src a{color:var(--cy)}
+.more .li .n{font-size:24px}
 </style>
 </head>
 <body>
@@ -91,6 +128,14 @@ h2{font-size:13px;color:var(--acc);margin:20px 0 2px;text-transform:uppercase;le
     <input type="search" id="q" placeholder="Поиск: иероглиф, pinyin, кириллица, русский">
     <div id="list"></div>
   </section>
+  <section id="v-les" class="hide"></section>
+  <section id="v-dlg" class="hide"></section>
+  <section id="v-gd" class="hide"></section>
+  <section id="v-more" class="hide more">
+    <button class="li" data-go="learn"><span class="n">🃏</span><span class="tt"><div>Карточки</div><div class="muted">Фразы, вывески и слова уроков</div></span></button>
+    <button class="li" data-go="quiz"><span class="n">✅</span><span class="tt"><div>Тест</div><div class="muted">Выбрать перевод</div></span></button>
+    <button class="li" data-go="syl"><span class="n">ā</span><span class="tt"><div>Слоги</div><div class="muted">Как читать pinyin, все 406 слогов</div></span></button>
+  </section>
   <section id="v-syl" class="hide">
     <h2 style="margin-top:4px">Как читать</h2>
     <div class="tips" id="tips"></div>
@@ -101,10 +146,11 @@ h2{font-size:13px;color:var(--acc);margin:20px 0 2px;text-transform:uppercase;le
 </main>
 <nav id="tabs">
   <button data-v="show" class="on"><b>📋</b>Показать</button>
-  <button data-v="learn"><b>🃏</b>Карточки</button>
-  <button data-v="quiz"><b>✅</b>Тест</button>
+  <button data-v="les"><b>📖</b>Уроки</button>
+  <button data-v="dlg"><b>💬</b>Диалоги</button>
+  <button data-v="gd"><b>🧭</b>Справка</button>
   <button data-v="list"><b>🔎</b>Фразы</button>
-  <button data-v="syl"><b>ā</b>Слоги</button>
+  <button data-v="more"><b>⋯</b>Ещё</button>
 </nav>
 <div id="full" class="hide"></div>
 <script>
@@ -117,6 +163,7 @@ for (const [sect, items] of Object.entries(DATA.phrases)) for (const [zh, py, cy
 for (const [zh, py, cy, ru, g] of DATA.signs) ALL.push({zh, py, cy, ru, deck: "Вывески: " + g});
 for (const [zh, py, cy, ru] of DATA.numbers) ALL.push({zh, py, cy, ru, deck: "Цифры"});
 for (const [zh, py, cy, ru] of DATA.stations) ALL.push({zh, py, cy, ru, deck: "Вокзалы"});
+for (const l of DATA.lessons) for (const b of l.theory) if (b.k === "e") ALL.push({zh: b.zh, py: b.py, cy: b.cy, ru: b.ru, deck: `Урок ${l.n}: ${l.title}`});
 ALL.forEach((c, i) => c.id = c.deck + "|" + c.zh);
 
 const store = {
@@ -155,14 +202,18 @@ function say(text) {
 
 // ---- tabs
 let view = "show";
-$("tabs").onclick = e => {
-  const b = e.target.closest("button"); if (!b) return;
-  view = b.dataset.v;
-  for (const x of document.querySelectorAll("#tabs button")) x.classList.toggle("on", x === b);
+const UNDER_MORE = ["learn", "quiz", "syl"];
+function go(v) {
+  view = v;
+  const tab = UNDER_MORE.includes(v) ? "more" : v;
+  for (const x of document.querySelectorAll("#tabs button")) x.classList.toggle("on", x.dataset.v === tab);
   for (const s of document.querySelectorAll("main > section")) s.classList.toggle("hide", s.id !== "v-" + view);
   $("deck").parentElement.classList.toggle("hide", !(view === "learn" || view === "quiz" || view === "list"));
+  try { speechSynthesis.cancel(); } catch {}
   render(); window.scrollTo(0, 0);
-};
+}
+$("tabs").onclick = e => { const b = e.target.closest("button"); if (b) go(b.dataset.v); };
+$("v-more").onclick = e => { const b = e.target.closest("[data-go]"); if (b) go(b.dataset.go); };
 
 // ---- show cards
 function drawShows() {
@@ -263,9 +314,274 @@ function drawSyl() {
 }
 $("sq").oninput = drawSyl;
 
+// ---- общие помощники
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const sayBtn = zh => `<button class="say" data-z="${esc(zh)}">🔊</button>`;
+document.addEventListener("click", e => {
+  const b = e.target.closest(".say"); if (b && !b.closest("#list")) { e.stopPropagation(); say(b.dataset.z); }
+}, true);
+const SOUND_HINT = `<p class="muted">🔊 Нужен звук: выключите беззвучный режим iPhone или подключите наушники.</p>`;
+
+// ---- числа на слух
+const DIG = "零一二三四五六七八九";
+function num2zh(n) {
+  if (n < 10) return DIG[n];
+  if (n < 20) return "十" + (n % 10 ? DIG[n % 10] : "");
+  if (n < 100) return DIG[Math.floor(n / 10)] + "十" + (n % 10 ? DIG[n % 10] : "");
+  const big = (k, name) => { const h = Math.floor(n / k), r = n % k; let s = (h === 2 ? "两" : DIG[h]) + name;
+    if (!r) return s; return s + (r < k / 10 ? "零" : "") + (r < 20 && r >= 10 ? "一" : "") + num2zh(r); };
+  if (n < 1000) return big(100, "百");
+  if (n < 10000) return big(1000, "千");
+  return String(n);
+}
+const NPY = {"零": "líng", "一": "yī", "二": "èr", "两": "liǎng", "三": "sān", "四": "sì", "五": "wǔ", "六": "liù", "七": "qī", "八": "bā", "九": "jiǔ", "十": "shí", "百": "bǎi", "千": "qiān", "块": "kuài"};
+const NCY = {"零": "линг", "一": "и", "二": "эр", "两": "лянг", "三": "сан", "四": "сы", "五": "у", "六": "лёу", "七": "чи", "八": "ба", "九": "дзёу", "十": "шы", "百": "бай", "千": "чьен", "块": "куай"};
+function zhPy(s) { return [...s].map((c, i) => c === "一" && i < s.length - 1 && "百千".includes(s[i + 1]) ? "yì" : NPY[c]).join(" "); }
+function zhCy(s) { return [...s].map(c => NCY[c]).join("-"); }
+function numTask() {
+  const r = Math.random(); let n, half = false;
+  if (r < .25) n = 1 + Math.floor(Math.random() * 20);
+  else if (r < .6) n = 20 + Math.floor(Math.random() * 80);
+  else if (r < .9) n = 100 + Math.floor(Math.random() * 900);
+  else n = 1000 + Math.floor(Math.random() * 9000);
+  if (n < 100 && Math.random() < .25) half = true;
+  const zh = num2zh(n) + "块" + (half ? "五" : "");
+  const fmt = (v, h) => "¥ " + v + (h ? ",5" : "");
+  const pool = new Set([fmt(n, half)]);
+  const cands = [n + 10, n - 10, n * 10, Math.floor(n / 10) || n + 1, n + 1, Number(String(n).split("").reverse().join("")) || n + 2, n + 100];
+  for (const c of shuffle(cands)) { if (pool.size >= 4) break; if (c > 0 && c !== n) pool.add(fmt(c, half)); }
+  while (pool.size < 4) pool.add(fmt(n + pool.size * 3, half));
+  const opts = shuffle([...pool]);
+  return {t: "numq", zh, py: zhPy(zh), cy: zhCy(zh), ru: fmt(n, half), opts, ok: opts.indexOf(fmt(n, half))};
+}
+
+// ---- уроки
+let lesState = null;  // {l, mode:'theory'|'ex'|'done', list, i, score, wrong, answered}
+const lesBest = () => store.get("les", {});
+function drawLessons() {
+  const box = $("v-les");
+  if (!lesState) {
+    const best = lesBest();
+    box.innerHTML = `<p class="muted">8 уроков по 30–45 минут: теория с озвучкой, потом упражнения. Слова уроков попадают в «Ещё → Карточки».</p>` +
+      DATA.lessons.map(l => `<button class="li" data-l="${l.n}"><span class="n">${l.n}</span><span class="tt"><div>${esc(l.title)}</div><div class="muted">~${l.min} мин · ${l.ex.length} упражнений</div></span><span class="st">${best[l.n] != null ? "✓ " + best[l.n] + "%" : ""}</span></button>`).join("");
+    box.onclick = e => { const b = e.target.closest("[data-l]"); if (b) { lesState = {l: DATA.lessons[b.dataset.l - 1], mode: "theory"}; drawLessons(); window.scrollTo(0, 0); } };
+    return;
+  }
+  const S = lesState, l = S.l;
+  if (S.mode === "theory") {
+    let h = `<button class="back" data-a="list">‹ Уроки</button><h2 style="margin-top:0">Урок ${l.n}</h2><div style="font-size:22px;font-weight:700">${esc(l.title)}</div><p class="muted">${esc(l.goal)}</p><div class="th">`;
+    for (const b of l.theory) {
+      if (b.k === "h") h += `<h3>${esc(b.t)}</h3>`;
+      else if (b.k === "p") h += `<p>${esc(b.t)}</p>`;
+      else h += `<div class="ex"><div class="zh">${esc(b.zh)}</div><div class="t"><div class="py">${esc(b.py)}</div><div class="cy">${esc(b.cy)}</div><div>${esc(b.ru)}</div>${b.note ? `<div class="note">${esc(b.note)}</div>` : ""}</div>${sayBtn(b.zh)}</div>`;
+    }
+    h += `</div><button class="btn yes big" data-a="start">Упражнения (${l.ex.length}) ›</button>`;
+    box.innerHTML = h;
+    box.onclick = e => { const a = e.target.closest("[data-a]"); if (!a) return;
+      if (a.dataset.a === "list") { lesState = null; drawLessons(); }
+      if (a.dataset.a === "start") startEx(l.ex); window.scrollTo(0, 0); };
+    return;
+  }
+  if (S.mode === "done") {
+    const pct = Math.round(100 * S.score / S.list.length);
+    if (!S.retry) { const b = lesBest(); b[l.n] = Math.max(b[l.n] || 0, pct); store.set("les", b); }
+    box.innerHTML = `<button class="back" data-a="list">‹ Уроки</button><div class="fc" style="min-height:30vh"><div style="font-size:48px">${pct >= 80 ? "🎉" : "💪"}</div><div style="font-size:22px;margin-top:8px">Верно ${S.score} из ${S.list.length}</div><div class="muted" style="margin-top:6px">${S.wrong.length ? "Ошибок: " + S.wrong.length : "Без ошибок"}</div></div>` +
+      (S.wrong.length ? `<button class="btn no big" data-a="wrong">Повторить ошибки (${S.wrong.length})</button>` : "") +
+      `<button class="btn big" data-a="again">Пройти заново</button><button class="btn big" data-a="theory">Теория урока</button>` +
+      (l.n < DATA.lessons.length ? `<button class="btn yes big" data-a="next">Урок ${l.n + 1} ›</button>` : "");
+    box.onclick = e => { const a = e.target.closest("[data-a]"); if (!a) return; const k = a.dataset.a;
+      if (k === "list") lesState = null;
+      if (k === "wrong") { startEx(S.wrong.map(x => x.t === "numq" ? {t: "num", n: 1} : x), true); return; }
+      if (k === "again") { startEx(l.ex); return; }
+      if (k === "theory") S.mode = "theory";
+      if (k === "next") lesState = {l: DATA.lessons[l.n], mode: "theory"};
+      drawLessons(); window.scrollTo(0, 0); };
+    return;
+  }
+  drawEx();
+}
+function startEx(ex, retry) {
+  const list = [];
+  for (const e of ex) if (e.t === "num") for (let i = 0; i < e.n; i++) list.push(numTask()); else list.push(e);
+  Object.assign(lesState, {mode: "ex", list, i: 0, score: 0, wrong: [], answered: false, retry: !!retry});
+  drawLessons(); window.scrollTo(0, 0);
+}
+const audioTask = e => e.t === "tone" || e.t === "listen" || e.t === "numq";
+function optHtml(o) { return Array.isArray(o) ? `<span class="ozh">${esc(o[0])}</span>${o[1] ? `<small class="opy hide">${esc(o[1])} · ${esc(o[2])}</small>` : ""}` : esc(o); }
+function drawEx() {
+  const S = lesState, e = S.list[S.i], box = $("v-les");
+  S.answered = false;
+  let h = `<button class="back" data-a="stop">‹ Урок ${S.l.n}</button><div class="muted">Упражнение ${S.i + 1} из ${S.list.length} · верно ${S.score}</div><div class="bar"><i style="width:${100 * S.i / S.list.length}%"></i></div>`;
+  if (audioTask(e)) {
+    const q = e.t === "tone" ? "Какой тон? Нажмите 🔊 и выберите" : e.t === "numq" ? "Сколько стоит? Послушайте" : "Что это значит? Послушайте";
+    h += `<div class="qq">${q}</div>`;
+    h += `<div style="text-align:center"><button class="btn" data-a="play" style="font-size:28px;padding:14px 30px;flex:none">🔊</button></div>`;
+    if (e.t === "tone") h += `<div class="qz" style="margin-top:10px">${esc(e.zh)}</div>`;
+    else h += `<div id="reveal" class="qz hide" style="margin-top:10px">${esc(e.zh)}</div><div style="text-align:center"><button class="back" data-a="show" id="showbtn">Показать текст</button></div>`;
+    h += `<div id="qinfo"></div>`;
+    h += SOUND_HINT;
+  } else if (e.t === "choice") {
+    h += `<div class="qq">${esc(e.q)}</div>` + (e.zh ? `<div class="qz">${esc(e.zh)} ${e.zh.includes("___") ? "" : sayBtn(e.zh)}</div>` : "");
+  } else if (e.t === "order") {
+    S.picked = []; S.order = shuffle(e.tiles.map((t, i) => i));
+    if (S.order.every((v, i) => v === i) && e.tiles.length > 1) S.order.reverse();
+    h += `<div class="qq">Соберите по-китайски: <b>${esc(e.ru)}</b></div><div class="ans tiles" id="ans"></div><div class="tiles" id="pool"></div>`;
+  }
+  if (e.t === "order") h += `<div class="row"><button class="btn" data-a="clear">Сбросить</button><button class="btn yes" data-a="check">Проверить</button></div>`;
+  else h += `<div class="opts" id="opts">` + e.opts.map((o, i) => `<button class="opt" data-o="${i}">${optHtml(o)}</button>`).join("") + `</div>`;
+  h += `<div id="fb"></div><div class="row hide" id="nextrow"><button class="btn yes" data-a="next">Дальше ›</button></div>`;
+  box.innerHTML = h;
+  if (e.t === "order") drawTiles();
+  if (audioTask(e)) setTimeout(() => say(e.zh), 250);
+  box.onclick = ev => {
+    const o = ev.target.closest("[data-o]"); if (o) return answerEx(+o.dataset.o, o);
+    const t = ev.target.closest("[data-tile]"); if (t) { if (S.answered) return; const k = +t.dataset.tile;
+      if (t.dataset.from === "pool") S.picked.push(k); else S.picked = S.picked.filter(x => x !== k); drawTiles(); return; }
+    const a = ev.target.closest("[data-a]"); if (!a) return; const k = a.dataset.a;
+    if (k === "play") say(e.zh);
+    if (k === "show") { $("reveal").classList.remove("hide"); a.classList.add("hide"); }
+    if (k === "clear" && !S.answered) { S.picked = []; drawTiles(); }
+    if (k === "check") checkOrder();
+    if (k === "next") { S.i++; if (S.i >= S.list.length) S.mode = "done"; drawLessons(); window.scrollTo(0, 0); }
+    if (k === "stop") { S.mode = "theory"; drawLessons(); window.scrollTo(0, 0); }
+  };
+}
+function drawTiles() {
+  const S = lesState, e = S.list[S.i];
+  const tile = (k, from) => `<button class="tile" data-tile="${k}" data-from="${from}"><b>${esc(e.tiles[k][0])}</b><small>${esc(e.tiles[k][1])}</small></button>`;
+  $("ans").innerHTML = S.picked.map(k => tile(k, "ans")).join("") || `<span class="muted" style="padding:14px 6px">нажимайте блоки по порядку</span>`;
+  $("pool").innerHTML = S.order.filter(k => !S.picked.includes(k)).map(k => tile(k, "pool")).join("");
+}
+const clean = s => s.replace(/[，。？！、,.?!\s]/g, "");
+function feedback(ok, text) {
+  const S = lesState; S.answered = true;
+  if (ok) S.score++; else S.wrong.push(S.list[S.i]);
+  $("fb").innerHTML = `<div class="why" style="border-left:4px solid var(${ok ? "--ok" : "--acc"})"><b>${ok ? "Верно" : "Неверно"}</b>${text ? "<br>" + text : ""}</div>`;
+  $("nextrow").classList.remove("hide");
+}
+function answerEx(i, btn) {
+  const S = lesState, e = S.list[S.i]; if (S.answered) return;
+  const btns = [...document.querySelectorAll("#opts .opt")];
+  btns[e.ok].classList.add("ok"); if (i !== e.ok) btn.classList.add("bad");
+  document.querySelectorAll(".opy").forEach(x => x.classList.remove("hide"));
+  let info = "";
+  if (audioTask(e)) {
+    const r = $("reveal"); if (r) r.classList.remove("hide"); const sb = $("showbtn"); if (sb) sb.classList.add("hide");
+    info = `<span class="py">${esc(e.py)}</span> · <span class="cy">${esc(e.cy)}</span>` + (e.ru && e.t !== "numq" ? ` — ${esc(e.ru)}` : "");
+  }
+  if (e.why) info += (info ? "<br>" : "") + esc(e.why);
+  feedback(i === e.ok, info);
+  const o = e.opts[e.ok]; if (e.t === "choice" && Array.isArray(o) && o[1]) say(o[0]);
+}
+function checkOrder() {
+  const S = lesState, e = S.list[S.i]; if (S.answered) return;
+  if (!S.picked.length) { $("fb").innerHTML = `<div class="why">Сначала соберите фразу из блоков.</div>`; return; }
+  const got = clean(S.picked.map(k => e.tiles[k][0]).join(""));
+  const right = clean(e.tiles.map(t => t[0]).join(""));
+  const ok = got === right || e.alts.some(a => clean(a) === got);
+  const full = e.tiles.map(t => t[0]).join("");
+  feedback(ok, `<span style="font-size:22px;font-weight:700">${esc(full)}</span> ${sayBtn(full)}<br><span class="py">${esc(e.tiles.map(t => t[1]).join(" "))}</span><br><span class="cy">${esc(e.tiles.map(t => t[2]).join(" "))}</span>` + (e.why ? "<br>" + esc(e.why) : ""));
+  say(full);
+}
+
+// ---- диалоги
+let dlg = null; // {d, step, log:[html], errors, mode}
+const dlgMode = () => store.get("dmode", "study");
+function lineHtml(s, me) {
+  const test = dlgMode() === "test" && !me;
+  const det = `<div class="py">${esc(s.py)}</div><div class="cy">${esc(s.cy)}</div><div>${esc(s.ru)}</div>${s.note ? `<div class="note">${esc(s.note)}</div>` : ""}`;
+  return `<div class="bub${me ? " me" : ""}"><div style="display:flex;gap:8px;align-items:flex-start"><div class="zh" style="flex:1">${esc(s.zh)}</div>${sayBtn(s.zh)}</div>` +
+    (test ? `<div class="det hide">${det}</div><div class="tap" data-a="rev">показать перевод</div>` : det) + `</div>`;
+}
+function drawDialogs() {
+  const box = $("v-dlg");
+  const segs = `<div class="seg"><button data-m="study" class="${dlgMode() === "study" ? "on" : ""}">Учебный: перевод виден</button><button data-m="test" class="${dlgMode() === "test" ? "on" : ""}">Проверка: на слух</button></div>`;
+  if (!dlg) {
+    const done = store.get("dlg", {});
+    box.innerHTML = `<p class="muted">Сценарии с выбором реплики. Собеседник говорит по-разному — учитесь узнавать ключевые слова.</p>` + segs +
+      DATA.dialogs.map((d, i) => `<button class="li" data-d="${i}"><span class="n">${i + 1}</span><span class="tt"><div>${esc(d.title)}</div><div class="muted">${esc(d.intro)}</div></span><span class="st">${done[i] != null ? "✓" + (done[i] ? " ош. " + done[i] : "") : ""}</span></button>`).join("");
+  } else {
+    const d = dlg.d;
+    box.innerHTML = `<button class="back" data-a="list">‹ Диалоги</button><div style="font-size:20px;font-weight:700">${esc(d.title)}</div><p class="muted">${esc(d.intro)}</p>` + segs +
+      `<div class="chat" id="chat">${dlg.log.join("")}</div><div id="turn"></div>`;
+    drawTurn();
+  }
+  box.onclick = e => {
+    const m = e.target.closest("[data-m]"); if (m) { store.set("dmode", m.dataset.m); if (dlg) { restartDlg(); } else drawDialogs(); return; }
+    const di = e.target.closest("[data-d]"); if (di) { dlg = {d: DATA.dialogs[+di.dataset.d], idx: +di.dataset.d}; restartDlg(); window.scrollTo(0, 0); return; }
+    const a = e.target.closest("[data-a]"); if (!a) return; const k = a.dataset.a;
+    if (k === "list") { dlg = null; drawDialogs(); window.scrollTo(0, 0); }
+    if (k === "rev") { a.previousElementSibling.classList.remove("hide"); a.remove(); }
+    if (k === "again") { restartDlg(); window.scrollTo(0, 0); }
+    if (k === "pick") pickDlg(+a.dataset.i, a);
+  };
+}
+function restartDlg() { Object.assign(dlg, {step: 0, log: [], errors: 0}); advanceDlg(); drawDialogs(); }
+function advanceDlg() {
+  // выводим реплики собеседника до следующего хода пользователя
+  const st = dlg.d.steps; let last = null;
+  while (dlg.step < st.length && st[dlg.step].who === "them") { dlg.log.push(lineHtml(st[dlg.step])); last = st[dlg.step]; dlg.step++; }
+  if (last) setTimeout(() => say(last.zh), 200);
+}
+function drawTurn() {
+  const st = dlg.d.steps, t = $("turn");
+  if (dlg.step >= st.length) {
+    const done = store.get("dlg", {}); done[dlg.idx] = dlg.errors; store.set("dlg", done);
+    t.innerHTML = `<div class="why" style="margin-top:14px"><b>Сценарий пройден</b>${dlg.errors ? ", ошибок: " + dlg.errors : " без ошибок"}.</div><div class="row"><button class="btn" data-a="again">Ещё раз</button><button class="btn yes" data-a="list">К списку</button></div>`;
+    return;
+  }
+  const y = st[dlg.step], test = dlgMode() === "test";
+  t.innerHTML = `<div class="qq" style="margin-top:14px"><b>Ваш ход:</b> ${esc(y.prompt)}</div><div class="opts">` +
+    y.opts.map((o, i) => `<button class="opt" data-a="pick" data-i="${i}"><span class="ozh">${esc(o.zh)}</span><small>${esc(o.py)}</small>${test ? "" : `<div class="muted">${esc(o.ru)}</div>`}</button>`).join("") + `</div><div id="dfb"></div>`;
+}
+function pickDlg(i, btn) {
+  const y = dlg.d.steps[dlg.step], o = y.opts[i];
+  if (!o.ok) {
+    dlg.errors++; btn.classList.add("bad");
+    $("dfb").innerHTML = `<div class="why">${esc(o.ru)} — ${esc(o.why || "не подходит здесь")}</div>`;
+    return;
+  }
+  dlg.log.push(lineHtml(o, true));
+  if (o.why) dlg.log.push(`<div class="muted" style="font-size:13px">${esc(o.why)}</div>`);
+  say(o.zh);
+  dlg.step++;
+  if (o.reply) { dlg.log.push(lineHtml(o.reply)); setTimeout(() => say(o.reply.zh), 1400); }
+  const before = dlg.log.length; advanceDlg();
+  drawDialogs();
+  const c = $("chat"); if (c && c.lastElementChild) c.lastElementChild.scrollIntoView({behavior: "smooth", block: "center"});
+}
+
+// ---- справочник
+let gdOpen = null;
+function drawGuide() {
+  const box = $("v-gd");
+  if (gdOpen === null) {
+    box.innerHTML = `<p class="muted">Практические заметки. Факты сверены с источниками ${esc(DATA.checked)}; помеченное [из памяти] — не сверено.</p>` +
+      DATA.guide.map((g, i) => `<button class="li" data-g="${i}"><span class="n">${i + 1}</span><span class="tt"><div>${esc(g.title)}</div></span></button>`).join("");
+  } else {
+    const g = DATA.guide[gdOpen];
+    box.innerHTML = `<button class="back" data-a="list">‹ Справка</button><div style="font-size:22px;font-weight:700">${esc(g.title)}</div><ul class="pts">` +
+      g.points.map(p => `<li>${esc(p)}</li>`).join("") + `</ul>` +
+      (g.phrases.length ? `<h2>Фразы — нажмите, чтобы показать крупно</h2><div class="chips">` + g.phrases.map((p, i) => `<button class="chip" data-p="${i}"><b>${esc(p[0])}</b><small>${esc(p[1])} · ${esc(p[2])}</small><small>${esc(p[3])}</small></button>`).join("") + `</div>` : "") +
+      `<div class="src">Источники (проверено ${esc(DATA.checked)}):<br>` + g.sources.map(s => `• <a href="${esc(s[1])}" target="_blank" rel="noopener">${esc(s[0])}</a> — ${esc(s[2])}`).join("<br>") + `</div>` +
+      (gdOpen + 1 < DATA.guide.length ? `<button class="btn big" data-a="next">${esc(DATA.guide[gdOpen + 1].title)} ›</button>` : "");
+  }
+  box.onclick = e => {
+    const gi = e.target.closest("[data-g]"); if (gi) { gdOpen = +gi.dataset.g; drawGuide(); window.scrollTo(0, 0); return; }
+    const p = e.target.closest("[data-p]"); if (p) { const [zh, py, cy, ru] = DATA.guide[gdOpen].phrases[+p.dataset.p]; openFull({zh: [zh], py, cy, ru}); return; }
+    const a = e.target.closest("[data-a]"); if (!a) return;
+    if (a.dataset.a === "list") gdOpen = null;
+    if (a.dataset.a === "next") gdOpen++;
+    drawGuide(); window.scrollTo(0, 0);
+  };
+}
+
 $("deck").onchange = () => { store.set("deck", $("deck").value); cur = null; render(); };
 function render() {
   if (view === "show") drawShows();
+  if (view === "les") drawLessons();
+  if (view === "dlg") drawDialogs();
+  if (view === "gd") drawGuide();
   if (view === "learn") { if (!cur || !cards().includes(cur)) nextCard(); else drawCard(); }
   if (view === "quiz") newQ();
   if (view === "list") drawList();
