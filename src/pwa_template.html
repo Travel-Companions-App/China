@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Китайский">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#b3261e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Китайский</title>
+<style>
+:root{--bg:#faf8f5;--fg:#1c1b1a;--muted:#6b6660;--line:#e3ddd5;--card:#fff;--acc:#b3261e;--cy:#1f5f8b;--ok:#1f6f4a;--soft:#f1ebe3}
+@media (prefers-color-scheme:dark){:root{--bg:#141312;--fg:#efeae3;--muted:#a39d95;--line:#33302c;--card:#1f1e1c;--acc:#ff6b5e;--cy:#7cc0f0;--ok:#5bc48f;--soft:#2a2724}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--fg)}
+body{font:17px/1.4 -apple-system,"PingFang SC","Noto Sans CJK SC",system-ui,sans-serif;padding-bottom:calc(64px + env(safe-area-inset-bottom))}
+header{position:sticky;top:0;z-index:5;background:var(--bg);padding:calc(8px + env(safe-area-inset-top)) 16px 8px;border-bottom:1px solid var(--line)}
+header select{width:100%;font:inherit;font-size:16px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--fg)}
+main{padding:14px 16px}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);z-index:6}
+nav button{flex:1;border:0;background:none;color:var(--muted);font:inherit;font-size:12px;padding:8px 0 10px;display:flex;flex-direction:column;align-items:center;gap:2px}
+nav button b{font-size:20px;font-weight:600;line-height:1}
+nav button.on{color:var(--acc)}
+.hide{display:none!important}
+.muted{color:var(--muted);font-size:14px}
+.zh{font-weight:700}
+.py{color:var(--acc)}
+.cy{color:var(--cy)}
+.btn{border:0;border-radius:12px;padding:14px 10px;font:inherit;font-size:16px;background:var(--soft);color:var(--fg);flex:1}
+.btn.no{background:var(--acc);color:#fff}
+.btn.yes{background:var(--ok);color:#fff}
+.row{display:flex;gap:10px;margin-top:12px}
+.bar{height:6px;background:var(--soft);border-radius:3px;overflow:hidden;margin:6px 0 12px}
+.bar i{display:block;height:100%;background:var(--ok);width:0}
+.fc{background:var(--card);border:1px solid var(--line);border-radius:18px;min-height:46vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px 16px}
+.fc .zh{font-size:clamp(40px,13vw,72px);line-height:1.2}
+.fc .py{font-size:22px;margin-top:12px}
+.fc .cy{font-size:20px;margin-top:2px}
+.fc .ru{font-size:19px;margin-top:8px}
+.fc .hint{margin-top:16px}
+.opts{display:grid;gap:10px;margin-top:12px}
+.opt{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:12px;padding:14px;font:inherit;text-align:left}
+.opt.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 18%,var(--card))}
+.opt.bad{border-color:var(--acc);background:color-mix(in srgb,var(--acc) 18%,var(--card))}
+input[type=search]{width:100%;font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--fg)}
+.item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);align-items:flex-start}
+.item .zh{font-size:24px;min-width:3.2em}
+.item .t{flex:1;font-size:15px}
+.say{border:0;background:var(--soft);border-radius:10px;width:40px;height:40px;font-size:18px;flex:none}
+h2{font-size:13px;color:var(--acc);margin:20px 0 2px;text-transform:uppercase;letter-spacing:.05em}
+.sc{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:10px}
+.sc .t{font-size:13px;color:var(--acc);font-weight:600}
+.sc .zh{font-size:21px;margin-top:4px}
+#full{position:fixed;inset:0;background:#fff;color:#000;z-index:20;padding:calc(24px + env(safe-area-inset-top)) 22px 40px;overflow:auto}
+#full .zh{font-size:clamp(34px,10vw,64px);line-height:1.3}
+#full .s{color:#555;font-size:16px;margin-top:16px}
+#full .cy2{color:#1f5f8b;font-size:17px;margin-top:4px}
+#full .close{position:fixed;right:14px;top:calc(10px + env(safe-area-inset-top));border:0;background:#eee;border-radius:20px;padding:8px 14px;font:inherit;font-size:15px}
+.sylgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:0 8px}
+.syl{padding:7px 2px;border-bottom:1px solid var(--line);font-size:15px}
+.syl b{font-weight:600}
+.tips div{padding:8px 0;border-bottom:1px solid var(--line);font-size:15px}
+.voice{font-size:13px;margin-top:6px}
+</style>
+</head>
+<body>
+<header><select id="deck"></select><div class="voice muted" id="vstat"></div></header>
+<main>
+  <section id="v-show">
+    <p class="muted">Нажмите карточку — откроется крупно, чтобы показать собеседнику.</p>
+    <div id="shows"></div>
+  </section>
+  <section id="v-learn" class="hide">
+    <div class="muted" id="lstat"></div>
+    <div class="bar"><i id="lbar"></i></div>
+    <label class="muted"><input type="checkbox" id="rev"> Наоборот: русский → китайский</label>
+    <div class="fc" id="fc" style="margin-top:10px"></div>
+    <div class="row"><button class="btn no" id="bNo">Не знаю</button><button class="btn" id="bSay">🔊</button><button class="btn yes" id="bYes">Знаю</button></div>
+    <div class="row"><button class="btn" id="bReset" style="font-size:14px">Сбросить прогресс колоды</button></div>
+  </section>
+  <section id="v-quiz" class="hide">
+    <div class="muted" id="qstat"></div>
+    <div class="fc" id="qcard" style="min-height:26vh;margin-top:8px"></div>
+    <div class="opts" id="qopts"></div>
+    <div class="row"><button class="btn" id="qNext">Дальше</button></div>
+  </section>
+  <section id="v-list" class="hide">
+    <input type="search" id="q" placeholder="Поиск: иероглиф, pinyin, кириллица, русский">
+    <div id="list"></div>
+  </section>
+  <section id="v-syl" class="hide">
+    <h2 style="margin-top:4px">Как читать</h2>
+    <div class="tips" id="tips"></div>
+    <h2>Все слоги</h2>
+    <input type="search" id="sq" placeholder="Поиск слога: zh, xi, ань…">
+    <div id="syls"></div>
+  </section>
+</main>
+<nav id="tabs">
+  <button data-v="show" class="on"><b>📋</b>Показать</button>
+  <button data-v="learn"><b>🃏</b>Карточки</button>
+  <button data-v="quiz"><b>✅</b>Тест</button>
+  <button data-v="list"><b>🔎</b>Фразы</button>
+  <button data-v="syl"><b>ā</b>Слоги</button>
+</nav>
+<div id="full" class="hide"></div>
+<script>
+const DATA = __DATA__;
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+const ALL = [];
+for (const [sect, items] of Object.entries(DATA.phrases)) for (const [zh, py, cy, ru] of items) ALL.push({zh, py, cy, ru, deck: "Фразы: " + sect});
+for (const [zh, py, cy, ru, g] of DATA.signs) ALL.push({zh, py, cy, ru, deck: "Вывески: " + g});
+for (const [zh, py, cy, ru] of DATA.numbers) ALL.push({zh, py, cy, ru, deck: "Цифры"});
+for (const [zh, py, cy, ru] of DATA.stations) ALL.push({zh, py, cy, ru, deck: "Вокзалы"});
+ALL.forEach((c, i) => c.id = c.deck + "|" + c.zh);
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("cn:" + k); return v ? JSON.parse(v) : d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("cn:" + k, JSON.stringify(v)); } catch {} }
+};
+let known = store.get("known", {});
+const decks = ["Все", "Все фразы", "Все вывески", ...new Set(ALL.map(c => c.deck))];
+decks.forEach(d => $("deck").add(new Option(d, d)));
+$("deck").value = store.get("deck", "Все");
+function cards() {
+  const d = $("deck").value;
+  if (d === "Все") return ALL;
+  if (d === "Все фразы") return ALL.filter(c => c.deck.startsWith("Фразы"));
+  if (d === "Все вывески") return ALL.filter(c => c.deck.startsWith("Вывески"));
+  return ALL.filter(c => c.deck === d);
+}
+
+// ---- speech: системный китайский голос iOS
+let zhVoice = null;
+function pickVoice() {
+  try {
+    const vs = speechSynthesis.getVoices();
+    zhVoice = vs.find(v => /zh[-_]CN/i.test(v.lang)) || vs.find(v => /^zh/i.test(v.lang)) || null;
+    $("vstat").textContent = zhVoice ? "🔊 Голос: " + zhVoice.name : (vs.length ? "🔇 Китайский голос не найден — скачайте его в настройках iOS" : "");
+  } catch { $("vstat").textContent = "🔇 Озвучка недоступна в этом браузере"; }
+}
+try { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; setTimeout(pickVoice, 800); } catch {}
+function say(text) {
+  try {
+    const u = new SpeechSynthesisUtterance(String(text).replace(/……/g, "").replace(/\s*\/\s*/g, "，").replace(/[（(].*?[)）]/g, ""));
+    u.lang = "zh-CN"; if (zhVoice) u.voice = zhVoice; u.rate = 0.8;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  } catch {}
+}
+
+// ---- tabs
+let view = "show";
+$("tabs").onclick = e => {
+  const b = e.target.closest("button"); if (!b) return;
+  view = b.dataset.v;
+  for (const x of document.querySelectorAll("#tabs button")) x.classList.toggle("on", x === b);
+  for (const s of document.querySelectorAll("main > section")) s.classList.toggle("hide", s.id !== "v-" + view);
+  $("deck").parentElement.classList.toggle("hide", !(view === "learn" || view === "quiz" || view === "list"));
+  render(); window.scrollTo(0, 0);
+};
+
+// ---- show cards
+function drawShows() {
+  const box = $("shows"); box.innerHTML = "";
+  DATA.show.forEach(c => {
+    const d = document.createElement("div"); d.className = "sc";
+    d.innerHTML = `<div class="t">${esc(c.title)}</div><div class="zh">${esc(c.zh.join(""))}</div><div class="muted">${esc(c.ru)}</div>`;
+    d.onclick = () => openFull(c); box.appendChild(d);
+  });
+}
+function openFull(c) {
+  $("full").innerHTML = `<button class="close" id="fclose">Закрыть</button><div class="zh">${c.zh.map(esc).join("<br>")}</div>
+    <div class="s">${esc(c.py)}</div><div class="cy2">${esc(c.cy)}</div><div class="s">${esc(c.ru)}</div>
+    <button class="btn" id="fsay" style="margin-top:18px;width:100%;background:#eee;color:#000">🔊 Произнести</button>`;
+  $("full").classList.remove("hide");
+  $("fclose").onclick = () => $("full").classList.add("hide");
+  $("fsay").onclick = () => say(c.zh.join(""));
+}
+
+// ---- flashcards
+let cur = null, flipped = false;
+function nextCard() {
+  const cs = cards(); const pending = cs.filter(c => !known[c.id]);
+  const pool = pending.length ? pending : cs;
+  cur = pool[Math.floor(Math.random() * pool.length)]; flipped = false; drawCard();
+}
+function drawCard() {
+  const cs = cards(); const k = cs.filter(c => known[c.id]).length;
+  $("lstat").textContent = `Выучено ${k} из ${cs.length}` + (k === cs.length ? " — колода пройдена" : "");
+  $("lbar").style.width = (cs.length ? 100 * k / cs.length : 0) + "%";
+  if (!cur) return;
+  const rev = $("rev").checked;
+  const front = rev ? `<div class="ru" style="font-size:24px">${esc(cur.ru)}</div>` : `<div class="zh">${esc(cur.zh)}</div>`;
+  const back = rev ? `<div class="zh">${esc(cur.zh)}</div><div class="py">${esc(cur.py)}</div><div class="cy">${esc(cur.cy)}</div>`
+                   : `<div class="py">${esc(cur.py)}</div><div class="cy">${esc(cur.cy)}</div><div class="ru">${esc(cur.ru)}</div>`;
+  $("fc").innerHTML = front + (flipped ? back : `<div class="hint muted">нажмите — перевернуть</div>`) + `<div class="hint muted">${esc(cur.deck)}</div>`;
+}
+$("fc").onclick = () => { flipped = !flipped; drawCard(); if (flipped) say(cur.zh); };
+function mark(ok) { if (ok) known[cur.id] = 1; else delete known[cur.id]; store.set("known", known); nextCard(); }
+$("bYes").onclick = () => mark(true);
+$("bNo").onclick = () => mark(false);
+$("bSay").onclick = () => cur && say(cur.zh);
+$("bReset").onclick = () => { cards().forEach(c => delete known[c.id]); store.set("known", known); nextCard(); };
+$("rev").onchange = drawCard;
+
+// ---- quiz
+let q = null, score = {ok: 0, n: 0};
+function newQ() {
+  const cs = cards();
+  const right = cs[Math.floor(Math.random() * cs.length)];
+  const wrong = [];
+  const okW = c => c !== right && c.ru !== right.ru && !wrong.some(w => w.ru === c.ru);
+  for (const pool of [cs, ALL]) for (const c of pool.slice().sort(() => Math.random() - .5)) { if (wrong.length >= 3) break; if (okW(c)) wrong.push(c); }
+  const opts = [right, ...wrong].sort(() => Math.random() - .5);
+  q = {right, opts, done: false};
+  $("qcard").innerHTML = `<div class="zh">${esc(right.zh)}</div><div class="hint muted">Что это значит?</div>`;
+  const box = $("qopts"); box.innerHTML = "";
+  opts.forEach(o => { const b = document.createElement("button"); b.className = "opt"; b.textContent = o.ru; b.onclick = () => answer(o, b); box.appendChild(b); });
+  $("qstat").textContent = `Верно ${score.ok} из ${score.n}`;
+}
+function answer(o, b) {
+  if (q.done) return; q.done = true; score.n++;
+  const btns = [...document.querySelectorAll(".opt")];
+  btns[q.opts.indexOf(q.right)].classList.add("ok");
+  if (o === q.right) score.ok++; else b.classList.add("bad");
+  $("qcard").innerHTML += `<div class="py">${esc(q.right.py)}</div><div class="cy">${esc(q.right.cy)}</div>`;
+  say(q.right.zh);
+  $("qstat").textContent = `Верно ${score.ok} из ${score.n}`;
+}
+$("qNext").onclick = newQ;
+
+// ---- list
+const norm = t => String(t).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+function drawList() {
+  const s = norm($("q").value.trim());
+  const cs = cards().filter(c => !s || c.zh.includes($("q").value.trim()) || norm(c.py).includes(s) || norm(c.cy).includes(s) || norm(c.ru).includes(s));
+  let html = "", last = "";
+  for (const c of cs) {
+    if (c.deck !== last) { html += `<h2>${esc(c.deck)}</h2>`; last = c.deck; }
+    html += `<div class="item"><div class="zh">${esc(c.zh)}</div><div class="t"><div class="py">${esc(c.py)}</div><div class="cy">${esc(c.cy)}</div><div>${esc(c.ru)}</div></div><button class="say" data-z="${esc(c.zh)}">🔊</button></div>`;
+  }
+  $("list").innerHTML = html || "<p class='muted'>Ничего не найдено</p>";
+}
+$("q").oninput = drawList;
+$("list").onclick = e => { const b = e.target.closest(".say"); if (b) say(b.dataset.z); };
+
+// ---- syllables
+$("tips").innerHTML = DATA.tips.map(([a, b]) => `<div><b class="cy">${esc(a)}</b> — ${esc(b)}</div>`).join("");
+function drawSyl() {
+  const s = norm($("sq").value.trim());
+  let html = "";
+  for (const [title, list] of DATA.syllables) {
+    const items = list.filter(([p, c]) => !s || p.startsWith(s) || norm(c).startsWith(s));
+    if (!items.length) continue;
+    html += `<h2>${esc(title)}</h2><div class="sylgrid">` + items.map(([p, c]) => `<div class="syl"><b>${esc(p)}</b> <span class="cy">${esc(c)}</span></div>`).join("") + "</div>";
+  }
+  $("syls").innerHTML = html || "<p class='muted'>Не найдено</p>";
+}
+$("sq").oninput = drawSyl;
+
+$("deck").onchange = () => { store.set("deck", $("deck").value); cur = null; render(); };
+function render() {
+  if (view === "show") drawShows();
+  if (view === "learn") { if (!cur || !cards().includes(cur)) nextCard(); else drawCard(); }
+  if (view === "quiz") newQ();
+  if (view === "list") drawList();
+  if (view === "syl") drawSyl();
+}
+$("deck").parentElement.classList.add("hide");
+render();
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
+</script>
+</body>
+</html>
