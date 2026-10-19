@@ -232,7 +232,7 @@ const store = {
 const ALL = [];
 for (const [sect, items] of Object.entries(DATA.phrases)) for (const [zh, py, cy, ru] of items) ALL.push({zh, py, cy, ru, deck: "Фразы: " + sect});
 for (const [zh, py, cy, ru, g] of DATA.signs) ALL.push({zh, py, cy, ru, deck: "Вывески: " + g});
-for (const [zh, py, cy, ru] of DATA.numbers) ALL.push({zh, py, cy, ru, deck: "Цифры"});
+// колода «Цифры» заменена разделами «Числа», «Количество», «Цены на слух» (NUMBERS остаётся для PDF)
 for (const [zh, py, cy, ru] of DATA.stations) ALL.push({zh, py, cy, ru, deck: "Вокзалы"});
 for (const l of DATA.lessons) for (const b of l.theory) if (b.k === "e") ALL.push({zh: b.zh, py: b.py, cy: b.cy, ru: b.ru, deck: `Урок ${l.n}: ${l.title}`});
 ALL.forEach((c, i) => c.id = c.deck + "|" + c.zh);
