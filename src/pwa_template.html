@@ -159,7 +159,6 @@ h2{font-size:13px;color:var(--acc);margin:20px 0 2px;text-transform:uppercase;le
 .hrow .zh,.hrow .m{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
 .hhead{display:flex;justify-content:space-between;align-items:baseline}
 .hhead button{border:0;background:none;color:var(--muted);font:inherit;font-size:13px;padding:4px 0}
-.secs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
 .sec{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:12px;padding:10px 6px;font:inherit;font-size:14px;text-align:center;line-height:1.2}
 .sec small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
 .pl{display:flex;align-items:stretch;gap:8px;margin-bottom:8px}
@@ -175,6 +174,39 @@ h2{font-size:13px;color:var(--acc);margin:20px 0 2px;text-transform:uppercase;le
 .faq summary{font-weight:600;cursor:pointer}
 .faq p,.faq li{font-size:15px;margin:6px 0}
 .pl .zh2{font-size:19px;font-weight:700;overflow-wrap:anywhere}
+/* двойной тап не увеличивает страницу; щипок остаётся */
+*{touch-action:manipulation}
+button{-webkit-user-select:none;user-select:none}
+.dsecs{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+.dsecs .sec{font-size:16px;padding:14px 12px;text-align:left}
+.lhead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:8px}
+.lhead .back{margin:0}
+.ltitle{font-size:22px;font-weight:700;margin:0 0 10px}
+.hintbox{background:color-mix(in srgb,var(--acc) 9%,var(--card));border:1px solid color-mix(in srgb,var(--acc) 30%,var(--line));border-radius:14px;padding:12px 14px;font-size:15px;margin:4px 0 10px}
+.empty{color:var(--muted);font-size:14px;padding:4px 0 2px;margin:0}
+.addfav{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:2px dashed var(--line);background:none;color:var(--acc);border-radius:14px;padding:16px;font:inherit;font-size:17px;font-weight:600;margin-top:8px}
+.addfav b{font-size:26px;line-height:1;font-weight:500}
+.hhead .plus{font-size:24px;color:var(--acc);padding:0 4px;line-height:1}
+/* свайп влево по строке → «Удалить», как в Почте */
+.sw{position:relative;overflow:hidden;touch-action:pan-y}
+.sw .swdel{position:absolute;top:0;bottom:0;right:0;width:88px;border:0;background:#d93025;color:#fff;font:inherit;font-size:15px}
+.sw .swc{position:relative;background:var(--bg);transition:transform .2s ease}
+.sw.drag .swc{transition:none}
+.sw:not(.open):not(.drag) .swdel{visibility:hidden}
+.sw.pls{margin-bottom:8px;border-radius:14px}.sw.pls .pl{margin:0}
+/* вводный гайд и «Что нового» */
+#intro{position:fixed;inset:0;z-index:30;background:var(--bg);display:flex;flex-direction:column;padding:calc(16px + env(safe-area-inset-top)) 22px calc(18px + env(safe-area-inset-bottom))}
+#intro .itop{display:flex;justify-content:flex-end;min-height:36px}
+#intro .itop button{border:0;background:none;color:var(--muted);font:inherit;font-size:16px;padding:6px 0}
+#intro .ibody{flex:1;overflow:auto;display:flex;flex-direction:column;justify-content:center}
+#intro .ibig{font-size:56px;font-weight:700;color:var(--acc);line-height:1.1}
+#intro h3{font-size:26px;margin:10px 0 12px;line-height:1.2}
+#intro p,#intro li{font-size:17px;margin:8px 0;line-height:1.45}
+#intro ul{padding-left:20px;margin:6px 0}
+#intro .dots{display:flex;gap:8px;justify-content:center;margin:14px 0}
+#intro .dots i{width:8px;height:8px;border-radius:4px;background:var(--line)}
+#intro .dots i.on{background:var(--acc);width:20px}
+#intro .ver{font-size:13px;color:var(--muted);margin-top:14px}
 </style>
 </head>
 <body>
@@ -183,7 +215,7 @@ h2{font-size:13px;color:var(--acc);margin:20px 0 2px;text-transform:uppercase;le
 <main>
   <section id="v-home" class="home"></section>
   <section id="v-show" class="hide">
-    <p class="muted">Здесь ваше избранное. Нажмите ☆ на любой фразе — в поиске, списке или при показе крупно — и она появится здесь. Нажмите карточку — откроется крупно, листайте свайпом.</p>
+    <p class="muted">Здесь ваше избранное. Нажмите ☆ на любой фразе — в поиске, Словаре или при показе крупно — и она появится здесь. Нажмите карточку — откроется крупно, листайте свайпом.</p>
     <div id="shows"></div>
   </section>
   <section id="v-learn" class="hide">
@@ -202,20 +234,23 @@ h2{font-size:13px;color:var(--acc);margin:20px 0 2px;text-transform:uppercase;le
     <div class="opts" id="qopts"></div>
     <div class="row"><button class="btn" id="qNext">Дальше</button></div>
   </section>
+  <section id="v-dict" class="hide"></section>
   <section id="v-list" class="hide">
-    <input type="search" id="q" placeholder="Поиск: иероглиф, pinyin, кириллица, русский">
+    <div class="lhead"><button class="back" id="lback">‹ Словарь</button><span class="muted" id="lcount"></span></div>
+    <div class="ltitle" id="ltitle"></div>
+    <div id="lhint"></div>
+    <input type="search" id="q" placeholder="Поиск в разделе: иероглиф, pinyin, кириллица, русский">
     <div id="list"></div>
   </section>
   <section id="v-les" class="hide"></section>
   <section id="v-gd" class="hide"></section>
   <section id="v-more" class="hide more">
-    <button class="li" data-go="list"><span class="n">🔎</span><span class="tt"><div>Фразы и вывески</div><div class="muted">Весь разговорник списком, по разделам</div></span></button>
     <button class="li" data-go="places"><span class="n">📍</span><span class="tt"><div>Мои места</div><div class="muted">Адреса иероглифами → карточка для такси. Хранятся на этом iPhone</div></span></button>
     <button class="li" data-go="my"><span class="n">✍︎</span><span class="tt"><div>Мои фразы</div><div class="muted">Нет нужной фразы — спросите Claude и сохраните ответ офлайн</div></span></button>
     <button class="li" data-go="learn"><span class="n">🃏</span><span class="tt"><div>Карточки</div><div class="muted">Листайте фразы, вывески, слова уроков; знакомые — скрыть</div></span></button>
     <button class="li" data-go="quiz"><span class="n">✅</span><span class="tt"><div>Тест</div><div class="muted">Выбрать перевод</div></span></button>
     <button class="li" data-go="gd"><span class="n">🧭</span><span class="tt"><div>Справка</div><div class="muted">Жизнь в Китае: оплата, такси, поезда, связь — с источниками</div></span></button>
-    <button class="li" data-go="les"><span class="n">📖</span><span class="tt"><div>Уроки</div><div class="muted">8 уроков: тоны, вопросы, числа, счётные слова</div></span></button>
+    <button class="li" data-go="les"><span class="n">📖</span><span class="tt"><div>Уроки</div><div class="muted" id="lesdesc">Уроки по ситуациям: знакомство, цены, магазин, такси, поезд, отель, еда</div></span></button>
     <button class="li" data-go="syl"><span class="n">ā</span><span class="tt"><div>Слоги</div><div class="muted">Как читать pinyin, все 406 слогов</div></span></button>
     <button class="li" data-go="faq"><span class="n">❓</span><span class="tt"><div>Помощь и FAQ</div><div class="muted">Как пользоваться, нет звука, не тот голос, обновление, сброс</div></span></button>
     <button class="li" data-go="set"><span class="n">⚙︎</span><span class="tt"><div>Настройки</div><div class="muted">Тема, резервная копия прогресса, версия</div></span></button>
@@ -234,10 +269,12 @@ h2{font-size:13px;color:var(--acc);margin:20px 0 2px;text-transform:uppercase;le
 </main>
 <nav id="tabs">
   <button data-v="home" class="on"><b>你</b>Главная</button>
+  <button data-v="dict"><b>词</b>Словарь</button>
   <button data-v="show"><b>📋</b>Показать</button>
   <button data-v="more"><b>⋯</b>Ещё</button>
 </nav>
 <div id="full" class="hide"></div>
+<div id="intro" class="hide"></div>
 <div id="upd" class="hide"><span>Доступна новая версия</span><button id="updgo">Обновить</button></div>
 <script>
 const DATA = __DATA__;
@@ -247,12 +284,15 @@ const store = {
   get(k, d) { try { const v = localStorage.getItem("cn:" + k); return v ? JSON.parse(v) : d; } catch { return d; } },
   set(k, v) { try { localStorage.setItem("cn:" + k, JSON.stringify(v)); } catch {} }
 };
+// первый запуск на этом устройстве: ещё нет ни одного ключа cn:* (до любой записи ниже)
+let FRESH = false;
+try { FRESH = !Object.keys(localStorage).some(k => k.startsWith("cn:")); } catch {}
 
 const ALL = [];
 for (const [sect, items] of Object.entries(DATA.phrases)) for (const [zh, py, cy, ru] of items) ALL.push({zh, py, cy, ru, deck: "Фразы: " + sect});
 for (const [zh, py, cy, ru, g] of DATA.signs) ALL.push({zh, py, cy, ru, deck: "Вывески: " + g});
-// колода «Цифры» заменена разделами «Числа», «Количество», «Цены на слух» (NUMBERS остаётся для PDF)
-for (const [zh, py, cy, ru] of DATA.stations) ALL.push({zh, py, cy, ru, deck: "Вокзалы"});
+// колода «Цифры» заменена разделами «Числа», «Количество», «Цены на слух» (NUMBERS остаётся для PDF);
+// вокзалы входят в раздел «Поезд» (собирается в build_pwa.py)
 for (const l of DATA.lessons) for (const b of l.theory) if (b.k === "e") ALL.push({zh: b.zh, py: b.py, cy: b.cy, ru: b.ru, deck: `Урок ${l.n}: ${l.title}`});
 ALL.forEach((c, i) => c.id = c.deck + "|" + c.zh);
 
@@ -311,12 +351,25 @@ function toggleFav(c) {
   store.set("favs", favs); return !!favs[id];
 }
 const favCards = () => Object.values(favs).sort((a, b) => a.t - b.t).map(f => ({...f, zh: f.zh.join(""), lines: f.zh, deck: "★ Избранное"}));
+// фраза переехала в другой раздел (ред. 12: «Слышите в ответ», «Вокзалы», пауэрбанк) — переносим её id в избранном и скрытых
+(function remapIds() {
+  const ids = new Set(ALL.map(c => c.id)), byZh = new Map();
+  for (const c of ALL) if (/^(Фразы|Вывески)/.test(c.deck)) byZh.set(c.zh, byZh.has(c.zh) ? null : c.id);
+  const fix = (obj, key) => { let ch = false;
+    for (const id of Object.keys(obj)) {
+      if (ids.has(id) || !/^(Фразы: |Вывески: |Вокзалы\|)/.test(id)) continue;
+      const nid = byZh.get(id.slice(id.indexOf("|") + 1)); if (!nid || obj[nid]) continue;
+      obj[nid] = typeof obj[id] === "object" ? {...obj[id], id: nid} : obj[id]; delete obj[id]; ch = true;
+    }
+    if (ch) store.set(key, obj); };
+  fix(favs, "favs"); fix(hidden, "hidden");
+})();
 
 const decks = ["Все", "★ Избранное", MY, "Все фразы", "Все вывески", ...new Set(ALL.map(c => c.deck).filter(d => d !== MY))];
 decks.forEach(d => $("deck").add(new Option(d, d)));
 $("deck").value = store.get("deck", "Все");
-function cards() {
-  const d = $("deck").value;
+const cards = () => deckCards($("deck").value);
+function deckCards(d) {
   if (d === "Все") return ALL;
   if (d === "★ Избранное") return favCards();
   if (d === "Все фразы") return ALL.filter(c => c.deck.startsWith("Фразы"));
@@ -344,21 +397,49 @@ function say(text) {
   } catch {}
 }
 
+// ---- навигация «назад» как в iOS: каждый переход вглубь пишется в историю браузера (pushState),
+// поэтому системный свайп от левого края в установленном приложении возвращает на шаг назад (popstate).
+// Кнопки «‹ …» и ✕ делают то же через navBack(). Смена вкладки сбрасывает стек.
+const NAV = {stack: [], silent: 0};
+try { history.replaceState({d: 0}, ""); } catch {}
+function navPush(undo) { NAV.stack.push(undo); try { history.pushState({d: NAV.stack.length}, ""); } catch {} }
+function navBack(n = 1) {
+  n = Math.min(n, NAV.stack.length); if (!n) return false;
+  const fs = NAV.stack.splice(NAV.stack.length - n).reverse();
+  NAV.silent++; try { history.go(-n); } catch { NAV.silent--; }
+  for (const f of fs) { try { f(); } catch {} }
+  return true;
+}
+function navReset() { const n = NAV.stack.length; if (!n) return; NAV.stack = []; NAV.silent++; try { history.go(-n); } catch { NAV.silent--; } }
+window.addEventListener("popstate", e => {
+  if (NAV.silent) { NAV.silent--; return; }
+  const d = (e.state && e.state.d) || 0;
+  while (NAV.stack.length > d) { const f = NAV.stack.pop(); try { f(); } catch {} }
+});
+
 // ---- tabs
 let view = "home";
-const UNDER_MORE = ["learn", "quiz", "syl", "list", "places", "set", "my", "les", "gd", "faq"];
-function go(v, keep) {
-  if (v === view && v === "home" && !keep) { homeQ = ""; }
+const TABS = ["home", "dict", "show", "more"];
+const PARENT = {list: "dict", learn: "more", quiz: "more", syl: "more", places: "more", set: "more", my: "more", les: "more", gd: "more", faq: "more"};
+const tabOf = v => PARENT[v] || v;
+function go(v, keep, nav) {
+  if (v === view && v === "home" && !keep) { homeQ = ""; homeEdit = false; }
+  const prev = view;
+  if (v !== prev) { if (v === "les") lesState = null; if (v === "gd") gdOpen = null; if (v === "places") placeEdit = null; }
+  if (tabOf(v) !== "dict") dictHint = false;
+  if (nav !== "none") {
+    if (TABS.includes(v)) navReset();                     // вкладка — корень, назад некуда
+    else if (v !== prev) navPush(() => go(prev, true, "none"));  // переход вглубь
+  }
   view = v;
-  const tab = UNDER_MORE.includes(v) ? "more" : v;
-  for (const x of document.querySelectorAll("#tabs button")) x.classList.toggle("on", x.dataset.v === tab);
+  for (const x of document.querySelectorAll("#tabs button")) x.classList.toggle("on", x.dataset.v === tabOf(v));
   for (const s of document.querySelectorAll("main > section")) s.classList.toggle("hide", s.id !== "v-" + view);
-  $("deck").parentElement.classList.toggle("hide", !(view === "learn" || view === "quiz" || view === "list"));
+  $("deck").parentElement.classList.toggle("hide", !(view === "learn" || view === "quiz"));
   try { speechSynthesis.cancel(); } catch {}
   render(); window.scrollTo(0, 0);
 }
 $("tabs").onclick = e => { const b = e.target.closest("button"); if (b) go(b.dataset.v); };
-$("v-more").onclick = e => { const b = e.target.closest("[data-go]"); if (!b) return; if (b.dataset.go === "list") { $("deck").value = "Все"; store.set("deck", "Все"); $("q").value = ""; } go(b.dataset.go); };
+$("v-more").onclick = e => { const b = e.target.closest("[data-go]"); if (b) go(b.dataset.go); };
 
 // ---- show cards
 function placeCard(p) {
@@ -371,7 +452,7 @@ function presetCards() { return [...DATA.show.map(c => ({...c, id: "show:" + c.i
 function drawShows() {
   const box = $("shows"); box.innerHTML = "";
   const all = favCards().map(f => ({...f, zh: f.lines, title: f.deck === "★ Избранное" ? "★" : f.deck}));
-  if (!all.length) { box.innerHTML = `<p class="muted" style="margin-top:20px">Пока пусто. Найдите фразу через поиск на главной и нажмите ☆.</p>`; return; }
+  if (!all.length) { box.innerHTML = `<p class="muted" style="margin-top:20px">Пока пусто. Найдите фразу через поиск на главной или в «Словаре» и нажмите ☆.</p>`; return; }
   all.forEach((c, i) => {
     const d = document.createElement("div"); d.className = "sc";
     d.innerHTML = `<div class="zh">${esc(c.zh.join(""))}</div><div class="muted"><span class="py">${esc(c.py || "")}</span> · ${esc(c.ru)}</div>`;
@@ -398,8 +479,10 @@ function openFull(c, list, i) {
   try { addRecent(list[i]); } catch {}
   fullS = {list, i, fz: store.get("fz", 1), rot: false};
   $("full").classList.remove("hide"); drawFull(); lockScreen();
+  navPush(closeFullNow);
 }
-function closeFull() { $("full").classList.add("hide"); $("full").classList.remove("rot"); fullS = null; unlockScreen(); try { speechSynthesis.cancel(); } catch {} if (view === "home" || view === "list" || view === "show" || view === "places") render(); }
+function closeFull() { if (!fullS) return; if (!navBack()) closeFullNow(); }
+function closeFullNow() { if (!fullS) return; $("full").classList.add("hide"); $("full").classList.remove("rot"); fullS = null; unlockScreen(); try { speechSynthesis.cancel(); } catch {} if (view === "home" || view === "list" || view === "show" || view === "places") render(); }
 function drawFull() {
   const S = fullS, c = S.list[S.i], lines = [].concat(c.lines || c.zh), F = $("full");
   F.style.setProperty("--fz", S.fz); F.classList.toggle("rot", S.rot);
@@ -518,15 +601,36 @@ function answer(o, b) {
 }
 $("qNext").onclick = newQ;
 
-// ---- list
+// ---- Словарь: разделы по алфавиту → список раздела
 const norm = t => String(t).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+let dictDeck = "Все вывески", dictHint = false;
+const FAV_HINT = `<div class="hintbox">Нажмите ☆ у фразы — она появится в «Избранном» на главной и во вкладке «Показать».</div>`;
+function dictSections() {
+  const out = Object.keys(DATA.phrases).map(k => ({deck: "Фразы: " + k, name: k}));
+  out.push({deck: "Все вывески", name: "Вывески"});
+  if (ALL.some(c => c.deck === MY)) out.push({deck: MY, name: MY});
+  for (const x of out) x.n = deckCards(x.deck).length;
+  return out.sort((a, b) => a.name.localeCompare(b.name, "ru"));
+}
+function drawDict() {
+  $("v-dict").innerHTML = (dictHint ? `<div class="hintbox"><b>Добавить в избранное:</b> откройте раздел и нажмите ☆ у нужной фразы. Найти быстрее — поиск на главной, там тоже есть ☆.</div>`
+      : `<p class="muted" style="margin:4px 0 0">Все фразы и вывески по разделам. Нажмите фразу — откроется крупно, ☆ — в избранное.</p>`) +
+    `<div class="dsecs">` + dictSections().map(x => `<button class="sec" data-sec="${esc(x.deck)}">${esc(x.name)}<small>${x.n}</small></button>`).join("") + `</div>`;
+}
+$("v-dict").onclick = e => { const b = e.target.closest("[data-sec]"); if (!b) return; dictDeck = b.dataset.sec; $("q").value = ""; go("list"); };
+$("lback").onclick = () => { if (!navBack()) go("dict"); };
 function drawList() {
   const s = norm($("q").value.trim());
-  const cs = cards().filter(c => !s || c.zh.includes($("q").value.trim()) || norm(c.py).includes(s) || norm(c.cy).includes(s) || norm(c.ru).includes(s));
+  const sec = dictSections().find(x => x.deck === dictDeck);
+  $("ltitle").textContent = sec ? sec.name : dictDeck;
+  $("lhint").innerHTML = dictHint ? FAV_HINT : "";
+  const cs = deckCards(dictDeck).filter(c => !s || c.zh.includes($("q").value.trim()) || norm(c.py).includes(s) || norm(c.cy).includes(s) || norm(c.ru).includes(s));
+  $("lcount").textContent = s ? `найдено ${cs.length}` : `${cs.length}`;
   let html = "", last = "";
   listShown = cs;
+  const multi = new Set(cs.map(c => c.deck)).size > 1;
   cs.forEach((c, i) => {
-    if (c.deck !== last) { html += `<h2>${esc(c.deck)}</h2>`; last = c.deck; }
+    if (multi && c.deck !== last) { html += `<h2>${esc(c.deck.replace(/^Вывески: /, ""))}</h2>`; last = c.deck; }
     html += `<div class="item${c.zh.length > 5 ? " long" : ""}" data-i="${i}"><div class="zh">${esc(c.zh)}</div><div class="t"><div class="py">${esc(c.py)}</div><div class="cy">${esc(c.cy)}</div><div>${esc(c.ru)}</div></div><button class="fav${isFav(c) ? " on" : ""}" data-fv="${i}">${isFav(c) ? "★" : "☆"}</button><button class="say" data-z="${esc(c.zh)}">🔊</button></div>`;
   });
   $("list").innerHTML = html || "<p class='muted'>Ничего не найдено</p>";
@@ -560,6 +664,48 @@ document.addEventListener("click", e => {
   const b = e.target.closest(".say"); if (b && !b.closest("#list")) { e.stopPropagation(); say(b.dataset.z); }
 }, true);
 const SOUND_HINT = `<p class="muted">🔊 Нужен звук: выключите беззвучный режим iPhone или подключите наушники.</p>`;
+
+// ---- свайп влево по строке → кнопка «Удалить» (избранное, недавние, мои места)
+const swWrap = (key, inner, cls) => `<div class="sw${cls ? " " + cls : ""}" data-sw="${esc(key)}"><button class="swdel" tabindex="-1">Удалить</button><div class="swc">${inner}</div></div>`;
+let swOpen = null, swDragged = 0, swDraggedEl = null;
+function swClose() { if (!swOpen) return; swOpen.querySelector(".swc").style.transform = ""; swOpen.classList.remove("open"); swOpen = null; }
+document.addEventListener("touchstart", e => {
+  const sw = e.target.closest(".sw");
+  if (swOpen && swOpen !== sw) swClose();
+  if (!sw || e.target.closest(".swdel") || e.touches.length !== 1) return;
+  const t = e.touches[0]; if (t.clientX < 24) return;   // левый край — системный жест «назад»
+  const c = sw.querySelector(".swc"), base = sw.classList.contains("open") ? -88 : 0, x0 = t.clientX, y0 = t.clientY;
+  let dir = null, x = base;
+  const move = ev => {
+    const p = ev.touches[0], mx = p.clientX - x0, my = p.clientY - y0;
+    if (!dir && (Math.abs(mx) > 8 || Math.abs(my) > 8)) dir = Math.abs(mx) > Math.abs(my) ? "h" : "v";
+    if (dir !== "h") return;
+    x = Math.max(-130, Math.min(0, base + mx));
+    if (x < 0 || base) { ev.preventDefault(); sw.classList.add("drag"); c.style.transform = `translateX(${x}px)`; }
+  };
+  const end = () => {
+    document.removeEventListener("touchmove", move); document.removeEventListener("touchend", end); document.removeEventListener("touchcancel", end);
+    sw.classList.remove("drag"); if (dir !== "h") return;
+    swDragged = Date.now(); swDraggedEl = sw;
+    if (x < -44) { c.style.transform = "translateX(-88px)"; sw.classList.add("open"); swOpen = sw; }
+    else { c.style.transform = ""; sw.classList.remove("open"); if (swOpen === sw) swOpen = null; }
+  };
+  document.addEventListener("touchmove", move, {passive: false}); document.addEventListener("touchend", end); document.addEventListener("touchcancel", end);
+}, {passive: true});
+document.addEventListener("click", e => {
+  const del = e.target.closest(".swdel");
+  if (del) { e.stopPropagation(); e.preventDefault(); swDelete(del.closest(".sw").dataset.sw); return; }
+  if (Date.now() - swDragged < 350 && swDraggedEl && swDraggedEl.contains(e.target)) { e.stopPropagation(); e.preventDefault(); return; }  // клик сразу после свайпа этой строки
+  if (swOpen) { const inOpen = swOpen.contains(e.target); swClose(); if (inOpen) { e.stopPropagation(); e.preventDefault(); } }
+}, true);
+function swDelete(key) {
+  swOpen = null;
+  const i = key.indexOf(":"), kind = key.slice(0, i), id = key.slice(i + 1);
+  if (kind === "fav") { delete favs[id]; store.set("favs", favs); }
+  if (kind === "recent") store.set("recent", recent().filter(x => x.id !== id));
+  if (kind === "place") { const p = places().find(x => x.id === id); if (!confirm("Удалить место «" + ((p && p.name) || "без названия") + "»?")) { render(); return; } deletePlace(id); }
+  render();
+}
 
 // ---- числа на слух
 const DIG = "零一二三四五六七八九";
@@ -596,14 +742,22 @@ function numTask() {
 
 // ---- уроки
 let lesState = null;  // {l, mode:'theory'|'ex'|'done', list, i, score, wrong, answered}
-const lesBest = () => store.get("les", {});
+// ред. 12: уроки пересобраны (12 по ситуациям) — прогресс старых 8 уроков (cn:les) не переносится
+try { localStorage.removeItem("cn:les"); } catch {}
+const lesBest = () => store.get("les2", {});
+function openLessonIn(n) {  // урок поверх списка уроков; назад — к списку
+  lesState = {l: DATA.lessons[n - 1], mode: "theory"};
+  navPush(() => { lesState = null; if (view === "les") { drawLessons(); window.scrollTo(0, 0); } });
+  drawLessons(); window.scrollTo(0, 0);
+}
+function lessonsBack() { if (!navBack()) { lesState = null; drawLessons(); } }
 function drawLessons() {
   const box = $("v-les");
   if (!lesState) {
     const best = lesBest();
-    box.innerHTML = `<p class="muted">8 уроков по 30–45 минут: теория с озвучкой, потом упражнения. Слова уроков попадают в «Ещё → Карточки».</p>` +
+    box.innerHTML = `<p class="muted">${DATA.lessons.length} уроков по ситуациям поездки, 25–40 минут каждый: теория с озвучкой, потом упражнения. Грамматика — внутри ситуаций. Слова уроков попадают в «Ещё → Карточки».</p>` +
       DATA.lessons.map(l => `<button class="li" data-l="${l.n}"><span class="n">${l.n}</span><span class="tt"><div>${esc(l.title)}</div><div class="muted">~${l.min} мин · ${l.ex.length} упражнений</div></span><span class="st">${best[l.n] != null ? "✓ " + best[l.n] + "%" : ""}</span></button>`).join("");
-    box.onclick = e => { const b = e.target.closest("[data-l]"); if (b) { lesState = {l: DATA.lessons[b.dataset.l - 1], mode: "theory"}; drawLessons(); window.scrollTo(0, 0); } };
+    box.onclick = e => { const b = e.target.closest("[data-l]"); if (b) openLessonIn(+b.dataset.l); };
     return;
   }
   const S = lesState, l = S.l;
@@ -617,23 +771,24 @@ function drawLessons() {
     h += `</div><button class="btn yes big" data-a="start">Упражнения (${l.ex.length}) ›</button>`;
     box.innerHTML = h;
     box.onclick = e => { const a = e.target.closest("[data-a]"); if (!a) return;
-      if (a.dataset.a === "list") { lesState = null; drawLessons(); }
-      if (a.dataset.a === "start") startEx(l.ex); window.scrollTo(0, 0); };
+      if (a.dataset.a === "list") lessonsBack();
+      if (a.dataset.a === "start") { navPush(() => { if (lesState) { lesState.mode = "theory"; if (view === "les") { drawLessons(); window.scrollTo(0, 0); } } }); startEx(l.ex); }
+      window.scrollTo(0, 0); };
     return;
   }
   if (S.mode === "done") {
     const pct = Math.round(100 * S.score / S.list.length);
-    if (!S.retry) { const b = lesBest(); b[l.n] = Math.max(b[l.n] || 0, pct); store.set("les", b); }
+    if (!S.retry) { const b = lesBest(); b[l.n] = Math.max(b[l.n] || 0, pct); store.set("les2", b); }
     box.innerHTML = `<button class="back" data-a="list">‹ Уроки</button><div class="fc" style="min-height:30vh"><div style="font-size:48px">${pct >= 80 ? "🎉" : "💪"}</div><div style="font-size:22px;margin-top:8px">Верно ${S.score} из ${S.list.length}</div><div class="muted" style="margin-top:6px">${S.wrong.length ? "Ошибок: " + S.wrong.length : "Без ошибок"}</div></div>` +
       (S.wrong.length ? `<button class="btn no big" data-a="wrong">Повторить ошибки (${S.wrong.length})</button>` : "") +
       `<button class="btn big" data-a="again">Пройти заново</button><button class="btn big" data-a="theory">Теория урока</button>` +
       (l.n < DATA.lessons.length ? `<button class="btn yes big" data-a="next">Урок ${l.n + 1} ›</button>` : "");
     box.onclick = e => { const a = e.target.closest("[data-a]"); if (!a) return; const k = a.dataset.a;
-      if (k === "list") lesState = null;
+      if (k === "list") { if (!navBack(2)) { lesState = null; drawLessons(); } return; }
       if (k === "wrong") { startEx(S.wrong.map(x => x.t === "numq" ? {t: "num", n: 1} : x), true); return; }
       if (k === "again") { startEx(l.ex); return; }
-      if (k === "theory") S.mode = "theory";
-      if (k === "next") lesState = {l: DATA.lessons[l.n], mode: "theory"};
+      if (k === "theory") { if (!navBack()) { S.mode = "theory"; drawLessons(); } return; }
+      if (k === "next") { navBack(); lesState = {l: DATA.lessons[l.n], mode: "theory"}; }
       drawLessons(); window.scrollTo(0, 0); };
     return;
   }
@@ -682,7 +837,7 @@ function drawEx() {
     if (k === "clear" && !S.answered) { S.picked = []; drawTiles(); }
     if (k === "check") checkOrder();
     if (k === "next") { S.i++; if (S.i >= S.list.length) S.mode = "done"; drawLessons(); window.scrollTo(0, 0); }
-    if (k === "stop") { S.mode = "theory"; drawLessons(); window.scrollTo(0, 0); }
+    if (k === "stop") { if (!navBack()) { S.mode = "theory"; drawLessons(); } window.scrollTo(0, 0); }
   };
 }
 function drawTiles() {
@@ -739,13 +894,18 @@ function drawGuide() {
       (gdOpen + 1 < DATA.guide.length ? `<button class="btn big" data-a="next">${esc(DATA.guide[gdOpen + 1].title)} ›</button>` : "");
   }
   box.onclick = e => {
-    const gi = e.target.closest("[data-g]"); if (gi) { gdOpen = +gi.dataset.g; drawGuide(); window.scrollTo(0, 0); return; }
+    const gi = e.target.closest("[data-g]"); if (gi) return openGuideIn(+gi.dataset.g);
     const p = e.target.closest("[data-p]"); if (p) { const [zh, py, cy, ru] = DATA.guide[gdOpen].phrases[+p.dataset.p]; openFull({zh: [zh], py, cy, ru}); return; }
     const a = e.target.closest("[data-a]"); if (!a) return;
-    if (a.dataset.a === "list") gdOpen = null;
+    if (a.dataset.a === "list") { if (!navBack()) { gdOpen = null; drawGuide(); } return; }
     if (a.dataset.a === "next") gdOpen++;
     drawGuide(); window.scrollTo(0, 0);
   };
+}
+function openGuideIn(i) {  // статья поверх списка статей; назад — к списку
+  gdOpen = i;
+  navPush(() => { gdOpen = null; if (view === "gd") { drawGuide(); window.scrollTo(0, 0); } });
+  drawGuide(); window.scrollTo(0, 0);
 }
 
 // ---- мои места: адреса иероглифами (хранятся только на устройстве) → карточка «Такси → место»
@@ -780,30 +940,36 @@ function drawPlaces() {
   } else {
     box.innerHTML = `<h2 style="margin-top:4px">Такси: куда едем?</h2><p class="muted">Нажмите место — откроется карточка для водителя. Адреса хранятся только на этом iPhone.</p>` +
       `<div class="pl"><button class="li" data-a="map"><span class="n">🗺</span><span class="tt"><div>Покажу на карте</div><div class="zh2" lang="zh">请带我们去这里。我给您看地图。</div></span></button></div>` +
-      all.map((p, i) => `<div class="pl"><button class="li" data-p="${i}"><span class="n">📍</span><span class="tt"><div>${esc(p.name || "Без названия")}</div><div class="zh2" lang="zh">${esc(p.zh || "")}</div><div class="muted" lang="zh">${esc(p.addr || "")}</div></span></button><button class="ed" data-e="${i}" aria-label="Изменить">✎</button></div>`).join("") +
-      (all.length ? "" : `<p class="muted">Пока пусто — добавьте отель, вокзал или любое место.</p>`) +
+      all.map((p, i) => swWrap("place:" + p.id, `<div class="pl"><button class="li" data-p="${i}"><span class="n">📍</span><span class="tt"><div>${esc(p.name || "Без названия")}</div><div class="zh2" lang="zh">${esc(p.zh || "")}</div><div class="muted" lang="zh">${esc(p.addr || "")}</div></span></button><button class="ed" data-e="${i}" aria-label="Изменить">✎</button></div>`, "pls")).join("") +
+      (all.length ? `<p class="muted" style="font-size:12px">Изменить — ✎, удалить — свайп влево по месту.</p>` : `<p class="muted">Пока пусто — добавьте отель, вокзал или любое место.</p>`) +
       `<button class="btn yes big" data-a="add">+ Добавить место</button>`;
   }
   box.onclick = e => {
     const pi = e.target.closest("[data-p]");
     if (pi) { const p = all[+pi.dataset.p], list = store.get("places", []), x = list.find(q => q.id === p.id); if (x) { x.t = Date.now(); store.set("places", list); }
       const cs = all.map(placeCard); return openFull(cs[+pi.dataset.p], cs, +pi.dataset.p); }
-    const pe = e.target.closest("[data-e]"); if (pe) { placeEdit = {...all[+pe.dataset.e]}; drawPlaces(); window.scrollTo(0, 0); return; }
+    const pe = e.target.closest("[data-e]"); if (pe) return openPlaceEdit({...all[+pe.dataset.e]});
     const a = e.target.closest("[data-a]"); if (!a) return; const k = a.dataset.a;
     if (k === "map") { const c = {...DATA.show.find(x => x.id === "taxi"), id: "show:taxi"}; return openFull(c, [c], 0); }
-    if (k === "add") placeEdit = {};
-    if (k === "cancel") placeEdit = null;
+    if (k === "add") return openPlaceEdit({});
+    if (k === "cancel") return closePlaceEdit();
     if (k === "save") {
       const v = id => $("pf-" + id).value.trim();
       const p = {id: placeEdit.id || "p" + Date.now(), name: v("name"), zh: v("zh"), addr: v("addr"), phone: v("phone"), note: v("note"), t: placeEdit.t || Date.now()};
       if (!p.zh && !p.addr) { alert("Нужно название или адрес иероглифами — их покажете водителю."); return; }
       if (!p.name) { const st = DATA.stations.find(x => x[0] === p.zh); p.name = st ? st[3] : p.zh || "Место"; }
-      const list = store.get("places", []).filter(x => x.id !== p.id); list.push(p); store.set("places", list); placeEdit = null;
+      const list = store.get("places", []).filter(x => x.id !== p.id); list.push(p); store.set("places", list); return closePlaceEdit();
     }
-    if (k === "del" && confirm("Удалить это место?")) { store.set("places", store.get("places", []).filter(x => x.id !== placeEdit.id)); placeEdit = null; }
-    drawPlaces(); window.scrollTo(0, 0);
+    if (k === "del" && confirm("Удалить это место?")) { store.set("places", store.get("places", []).filter(x => x.id !== placeEdit.id)); return closePlaceEdit(); }
   };
 }
+function openPlaceEdit(p) {  // форма поверх списка мест; назад — к списку без сохранения
+  placeEdit = p;
+  navPush(() => { placeEdit = null; if (view === "places") { drawPlaces(); window.scrollTo(0, 0); } });
+  drawPlaces(); window.scrollTo(0, 0);
+}
+function closePlaceEdit() { if (!navBack()) { placeEdit = null; drawPlaces(); window.scrollTo(0, 0); } }
+function deletePlace(id) { store.set("places", store.get("places", []).filter(x => x.id !== id)); }
 
 // ---- мои фразы: запрос в приложение Claude (по подписке) → вставка ответа → офлайн
 let myAsk = "", myPaste = "", myParsed = null;
@@ -908,9 +1074,13 @@ function drawHomeRes() {
 // ---- главная: кнопки (cn:quick) и порядок блоков (cn:homeLayout)
 const ICON = {taxi: "🗺", nochinese: "🗣", help: "🆘", checkin: "🏨", train: "🚆", food: "🍜", bag: "🧳"};
 const DEF_QUICK = [{k: "taxi"}, {k: "show", id: "nochinese"}, {k: "show", id: "help"}];
-const BLOCKS = {quick: "Кнопки", recent: "Недавние", fav: "Избранное", secs: "Разделы"};
+const BLOCKS = {quick: "Кнопки", fav: "Избранное", recent: "Недавние"};  // «Разделы» (ред. ≤11) — теперь вкладка «Словарь»
 const quick = () => store.get("quick", DEF_QUICK);
-const layout = () => { const l = store.get("homeLayout", {}); const order = (l.order || []).filter(b => BLOCKS[b]); for (const b of Object.keys(BLOCKS)) if (!order.includes(b)) order.push(b); return {order, off: l.off || []}; };
+const layout = () => {
+  const l = store.get("homeLayout", {}); const order = (l.order || []).filter(b => BLOCKS[b]); for (const b of Object.keys(BLOCKS)) if (!order.includes(b)) order.push(b);
+  let off = (l.off || []).filter(b => BLOCKS[b]); if (order.every(b => off.includes(b))) off = off.filter(b => b !== order[0]);  // хотя бы один блок виден
+  return {order, off};
+};
 const qKey = q => q.k === "taxi" ? "taxi" : q.k === "card" ? "card:" + q.c.id : q.k + ":" + q.id;
 function qFromCard(c) {
   const id = String(c.id || "");
@@ -939,7 +1109,9 @@ function openQuick(i) {
 let homeEdit = false;
 function drawHomeEdit() {
   const L = layout(), q = quick(), mv = (a, i, n) => `<button class="mv" data-mv="${a}:${i}:-1"${i ? "" : " disabled"}>↑</button><button class="mv" data-mv="${a}:${i}:1"${i < n - 1 ? "" : " disabled"}>↓</button>`;
-  let h = `<h2>Порядок блоков</h2>` + L.order.map((b, i) => `<div class="erow"><label class="t"><input type="checkbox" data-blk="${b}"${L.off.includes(b) ? "" : " checked"}> ${BLOCKS[b]}</label>${mv("b", i, L.order.length)}</div>`).join("");
+  const onN = L.order.filter(b => !L.off.includes(b)).length;
+  let h = `<h2>Блоки главной</h2><p class="muted" style="margin:2px 0 4px">Галочка — показывать блок, стрелки — порядок. Хотя бы один блок остаётся.</p>` + L.order.map((b, i) => { const on = !L.off.includes(b);
+    return `<div class="erow"><label class="t"><input type="checkbox" data-blk="${b}"${on ? " checked" : ""}${on && onN === 1 ? " disabled" : ""}> ${BLOCKS[b]}</label>${mv("b", i, L.order.length)}</div>`; }).join("");
   h += `<h2>Кнопки</h2>` + (q.length ? q.map((x, i) => { const r = qResolve(x); return `<div class="erow"><div class="t">${r ? r.icon + " " + esc(r.label) : "<span class='muted'>удалено</span>"}</div>${mv("q", i, q.length)}<button class="mv" data-qdel="${i}" aria-label="Убрать">✕</button></div>`; }).join("") : `<p class="muted">Кнопок нет.</p>`);
   const have = new Set(q.map(qKey));
   const opts = [[`taxi`, "🚕 Такси — выбор места"], ...places().filter(p => !have.has("place:" + p.id)).map(p => ["place:" + p.id, "📍 Такси: " + p.name]),
@@ -958,21 +1130,21 @@ function homeEditClick(e) {
     else { const q = quick(); [q[+i], q[j]] = [q[j], q[+i]]; store.set("quick", q); }
     return drawHomeEdit(); }
   const qd = e.target.closest("[data-qdel]"); if (qd) { const q = quick(); q.splice(+qd.dataset.qdel, 1); store.set("quick", q); return drawHomeEdit(); }
-  const bl = e.target.closest("[data-blk]"); if (bl) { const L = layout(); L.off = bl.checked ? L.off.filter(x => x !== bl.dataset.blk) : [...L.off, bl.dataset.blk]; store.set("homeLayout", L); return; }
+  const bl = e.target.closest("[data-blk]"); if (bl) { const L = layout(); L.off = bl.checked ? L.off.filter(x => x !== bl.dataset.blk) : [...L.off, bl.dataset.blk];
+    if (L.order.every(b => L.off.includes(b))) { bl.checked = true; return; }
+    store.set("homeLayout", L); return drawHomeEdit(); }
   const he = e.target.closest("[data-he]"); if (!he) return true;
   if (he.dataset.he === "reset" && confirm("Вернуть кнопки и порядок блоков как было?")) { localStorage.removeItem("cn:quick"); localStorage.removeItem("cn:homeLayout"); return drawHomeEdit(); }
-  if (he.dataset.he === "done") { homeEdit = false; drawHome(); window.scrollTo(0, 0); }
+  if (he.dataset.he === "done") { if (!navBack()) exitHomeEdit(); }
 }
+function exitHomeEdit() { homeEdit = false; if (view === "home") { drawHome(); window.scrollTo(0, 0); } }
 
-function openLesson(n) { lesState = {l: DATA.lessons[n - 1], mode: "theory"}; go("les"); }
+function openLesson(n) { go("les"); openLessonIn(n); }
 let homeRows = [];
-const rowHtml = (c, i) => `<div class="hrow" data-hr="${i}"><div class="t"><div class="zh">${esc([].concat(c.lines || c.zh).join(""))}</div><div class="m"><span class="py">${esc(c.py || "")}</span> · <span class="cy">${esc(c.cy || "")}</span></div><div class="m">${esc(c.ru || "")}</div></div><button class="say" data-z="${esc([].concat(c.lines || c.zh).join(""))}">🔊</button></div>`;
-function homeSections() {
-  const out = Object.entries(DATA.phrases).map(([k, v]) => ({deck: "Фразы: " + k, name: k, n: v.length}));
-  out.push({deck: "Все вывески", name: "Вывески", n: DATA.signs.length}, {deck: "Вокзалы", name: "Вокзалы", n: DATA.stations.length});
-  const my = ALL.filter(c => c.deck === MY).length; if (my) out.push({deck: MY, name: MY, n: my});
-  return out;
-}
+// строка главной; sw — ключ для свайпа «Удалить» (fav:<id> / recent:<id>)
+const rowHtml = (c, i, sw) => { const z = esc([].concat(c.lines || c.zh).join(""));
+  const row = `<div class="hrow" data-hr="${i}"><div class="t"><div class="zh">${z}</div><div class="m"><span class="py">${esc(c.py || "")}</span> · <span class="cy">${esc(c.cy || "")}</span></div><div class="m">${esc(c.ru || "")}</div></div><button class="say" data-z="${z}">🔊</button></div>`;
+  return sw ? swWrap(sw, row) : row; };
 function drawHome() {
   const box = $("v-home");
   if (!$("hq")) {
@@ -987,13 +1159,13 @@ function drawHome() {
       const f = e.target.closest("[data-fv]"); if (f) { const on = toggleFav(homeRes[+f.dataset.fv]); f.classList.toggle("on", on); f.textContent = on ? "★" : "☆"; return; }
       const ri = e.target.closest("[data-ri]"); if (ri) return openFull(homeRes[+ri.dataset.ri], homeRes, +ri.dataset.ri);
       const hr = e.target.closest("[data-hr]"); if (hr) { const [list, i] = homeRows[+hr.dataset.hr]; return openFull(list[i], list, i); }
-      const g = e.target.closest("[data-go-gd]"); if (g) { gdOpen = +g.dataset.goGd; return go("gd"); }
+      const g = e.target.closest("[data-go-gd]"); if (g) { go("gd"); return openGuideIn(+g.dataset.goGd); }
       const l = e.target.closest("[data-go-les]"); if (l) return openLesson(+l.dataset.goLes);
-      const sc = e.target.closest("[data-sec]"); if (sc) { $("deck").value = sc.dataset.sec; store.set("deck", sc.dataset.sec); $("q").value = ""; return go("list"); }
       if (e.target.closest("[data-ask]")) { myAsk = homeQ.trim(); myParsed = null; return go("my"); }
       const a = e.target.closest("[data-h]"); if (!a) return; const k = a.dataset.h;
       if (k === "clr") { store.set("recent", []); drawHome(); }
-      if (k === "edit") { homeEdit = true; drawHome(); window.scrollTo(0, 0); }
+      if (k === "addfav") { dictHint = true; go("dict"); }
+      if (k === "edit") { homeEdit = true; navPush(exitHomeEdit); drawHome(); window.scrollTo(0, 0); }
     };
   }
   if ($("hq").value !== homeQ) $("hq").value = homeQ;
@@ -1003,14 +1175,15 @@ function drawHome() {
   if (searching) return drawHomeRes();
   if (homeEdit) return drawHomeEdit();
   homeRows = [];
-  const rows = list => list.map((c, i) => { homeRows.push([list, i]); return rowHtml(c, homeRows.length - 1); }).join("");
+  const rows = (list, sw) => list.map((c, i) => { homeRows.push([list, i]); return rowHtml(c, homeRows.length - 1, sw && sw(c)); }).join("");
   const rc = recent(), fv = favCards(), L = layout();
   const blk = {
     quick: () => { const qs = quick().map((q, i) => [qResolve(q), i]).filter(([r]) => r);
       return qs.length ? `<div class="quick">` + qs.map(([r, i], n) => `<button class="qk${n ? "" : " main"}" data-q="${i}"><b>${r.icon}</b>${esc(r.label)}</button>`).join("") + `</div>` : ""; },
-    recent: () => rc.length ? `<div class="hhead"><h2>Недавние</h2><button data-h="clr">очистить</button></div>` + rows(rc) : "",
-    fav: () => fv.length ? `<h2>★ Избранное</h2>` + rows(fv) : "",
-    secs: () => `<h2>Разделы</h2><div class="secs">` + homeSections().map(x => `<button class="sec" data-sec="${esc(x.deck)}">${esc(x.name)}<small>${x.n}</small></button>`).join("") + `</div>`,
+    recent: () => rc.length ? `<div class="hhead"><h2>Недавние</h2><button data-h="clr">очистить</button></div>` + rows(rc, c => "recent:" + c.id)
+      : `<h2>Недавние</h2><p class="empty">Здесь появятся последние 12 фраз, которые вы открывали крупно, — чтобы вернуться к ним, не ища снова.</p>`,
+    fav: () => fv.length ? `<div class="hhead"><h2>★ Избранное</h2><button class="plus" data-h="addfav" aria-label="Добавить в избранное">＋</button></div>` + rows(fv, c => "fav:" + c.id)
+      : `<h2>★ Избранное</h2><p class="empty">Фразы, которые нужны часто, — под рукой и во вкладке «Показать».</p><button class="addfav" data-h="addfav"><b>＋</b>Добавить в избранное</button>`,
   };
   let h = L.order.filter(b => !L.off.includes(b)).map(b => blk[b]()).join("");
   h += `<div class="row"><button class="btn" data-h="edit" style="font-size:14px">⚙ Настроить главную</button></div>`;
@@ -1056,7 +1229,7 @@ function drawSettings() {
     <h2>Резервная копия</h2><p class="muted">Прогресс, избранное, мои места и мои фразы хранятся только на этом iPhone (${Math.ceil(used / 1024)} КБ). Сохраните копию в «Файлы» перед переустановкой или сменой телефона.</p>
     <div class="row"><button class="btn" data-s="exp">Сохранить копию</button><button class="btn" data-s="imp">Восстановить</button></div><input type="file" id="impf" accept="application/json,.json" class="hide">
     <h2>Обновление</h2><p class="muted">Версия ${esc(DATA.built)} (${esc(DATA.ver)}). При интернете новая версия скачивается сама — появится кнопка «Обновить».</p>
-    <div class="row"><button class="btn" data-s="upd">Проверить сейчас</button></div><div class="muted" id="updst"></div>
+    <div class="row"><button class="btn" data-s="upd">Проверить сейчас</button><button class="btn" data-s="news">Что нового</button></div><div class="muted" id="updst"></div>
     <p class="muted">Если приложение ведёт себя странно или не обновляется — переустановите офлайн-файлы. Ваши данные (места, избранное, мои фразы) не удаляются. Нужен интернет.</p>
     <div class="row"><button class="btn" data-s="hard">Переустановить офлайн-файлы</button></div>
     <h2>Сброс данных</h2><p class="muted">Удаляется только выбранное. Перед полным сбросом сохраните копию.</p>
@@ -1079,10 +1252,12 @@ function drawSettings() {
     if (CLR[k] && confirm(CLR[k][1])) { for (const key of CLR[k][0]) localStorage.removeItem("cn:" + key);
       if (k === "clr-places") store.set("places", []);
       location.reload(); }
-    if (k === "clr-all" && confirm("Удалить ВСЕ данные приложения на этом устройстве: места, избранное, мои фразы, настройки? Отменить нельзя.")) {
+    if (k === "clr-all" && confirm("Удалить ВСЕ данные приложения на этом устройстве: места, избранное, мои фразы, настройки? Приложение вернётся к исходному состоянию и покажет вводный гайд. Отменить нельзя.")) {
       for (const key of Object.keys(localStorage)) if (key.startsWith("cn:")) localStorage.removeItem(key);
-      store.set("places", []); location.reload();
+      location.reload();
     }
+    if (k === "news") showNews(0);
+    if (k === "intro") showIntro();
   };
   $("impf").onchange = e => e.target.files[0] && importData(e.target.files[0]);
   $("vsel") && ($("vsel").onchange = e => { store.set("voice", e.target.value); pickVoice(); say("你好"); });
@@ -1107,24 +1282,79 @@ async function hardRefresh() {
 
 // ---- помощь и FAQ
 const FAQ = [
-  ["Как быстро найти фразу", `<p>Пишите в поиск на главной: по-русски («вода»), pinyin без тонов («shui»), кириллицей («шуэй») или иероглифами. Нажмите фразу — она откроется крупно: иероглифы, pinyin, кириллица «как слышится», перевод и 🔊.</p><p>Нет нужной фразы — внизу результатов «Спросить Claude»: ответ сохраняется в «Мои фразы» и дальше работает без интернета.</p>`],
+  ["Как быстро найти фразу", `<p>Пишите в поиск на главной: по-русски («вода»), pinyin без тонов («shui»), кириллицей («шуэй») или иероглифами. Нажмите фразу — она откроется крупно: иероглифы, pinyin, кириллица «как слышится», перевод и 🔊.</p><p>Весь разговорник по разделам — вкладка «Словарь» (разделы по алфавиту, внутри — поиск по разделу).</p><p>Нет нужной фразы — внизу результатов «Спросить Claude»: ответ сохраняется в «Мои фразы» и дальше работает без интернета.</p>`],
   ["Как показать фразу собеседнику", `<p>Нажмите фразу — откроется крупно на белом фоне. A+ / A− — размер, «Поворот» — горизонтально, свайп — соседние фразы. Пока карточка открыта, экран не гаснет (на iPhone с iOS 18.4 и новее).</p>`],
-  ["Такси: свои адреса", `<p>Кнопка «Такси» на главной → список мест. «+ Добавить место»: название по-русски для себя, название и адрес иероглифами (скопируйте из подтверждения брони или карты, или попросите на ресепшн написать). Нажали место — карточка для водителя с адресом.</p><p>Нет адреса — «Покажу на карте»: фраза «отвезите сюда, покажу на карте».</p><p>Править или удалить место — кнопка ✎ справа.</p>`],
-  ["Как настроить главную", `<p>Внизу главной — «⚙ Настроить главную»: порядок блоков (кнопки, недавние, избранное, разделы), какие показывать, какие кнопки наверху.</p><p>Любую фразу или место можно сделать кнопкой: откройте крупно и нажмите 📌. Нажмите 📌 ещё раз — кнопка уберётся.</p>`],
-  ["Что во вкладке «Показать»", `<p>Только ваше избранное. Нажмите ☆ на фразе (в поиске, списке, при показе крупно) — она появится там.</p>`],
+  ["Такси: свои адреса", `<p>Кнопка «Такси» на главной → список мест. «+ Добавить место»: название по-русски для себя, название и адрес иероглифами (скопируйте из подтверждения брони или карты, или попросите на ресепшн написать). Нажали место — карточка для водителя с адресом.</p><p>Нет адреса — «Покажу на карте»: фраза «отвезите сюда, покажу на карте».</p><p>Править — кнопка ✎ справа, удалить — свайп влево по месту → «Удалить».</p>`],
+  ["Как настроить главную", `<p>Внизу главной — «⚙ Настроить главную»: какие блоки показывать (кнопки, избранное, недавние) и в каком порядке, какие кнопки наверху. Один блок всегда остаётся. Разделы фраз — во вкладке «Словарь».</p><p>Любую фразу или место можно сделать кнопкой: откройте крупно и нажмите 📌. Нажмите 📌 ещё раз — кнопка уберётся.</p>`],
+  ["Что во вкладке «Показать»", `<p>Только ваше избранное. Нажмите ☆ на фразе (в поиске, Словаре, при показе крупно) — она появится там и в блоке «Избранное» на главной. Пустое избранное — на главной кнопка «＋ Добавить в избранное», она откроет Словарь.</p>`],
+  ["Жесты", `<ul><li><b>Назад</b> — свайп от самого левого края экрана вправо (как в приложениях iOS) или кнопка «‹ …» сверху.</li><li><b>Удалить</b> из избранного, недавних или моих мест — свайп по строке влево → «Удалить».</li><li><b>Показ крупно</b> — свайп влево / вправо листает соседние фразы.</li><li><b>Карточки</b> — свайп влево — дальше, вправо — назад.</li><li>Двойной тап страницу не увеличивает; если нужно крупнее — A+ в показе крупно.</li></ul>`],
   ["Карточки для заучивания", `<p>«Ещё → Карточки». Сверху выберите колоду. На карточке иероглифы и pinyin; нажмите — кириллица, перевод и звук. «Дальше» / «Назад» или свайп. Знакомое — «Знаю — не показывать»; вернуть — «Скрытые».</p>`],
   ["Нет звука", `<ul><li>Выключите беззвучный режим iPhone: в беззвучном режиме Safari не воспроизводит озвучку.</li><li>Проверьте громкость или подключите наушники.</li><li>«Ещё → Настройки → Голос → Проверить голос». Если голосов 0 — скачайте китайский голос в настройках iPhone: Универсальный доступ → раздел озвучивания текста (Spoken Content / Read &amp; Speak) → Голоса → Китайский.</li></ul>`],
   ["Всегда звучит Tingting, хотя в настройках iPhone другой голос", `<p>Веб-приложениям Safari на iPhone доступна только часть голосов iOS: скачанные и улучшенные голоса из настроек обычно не видны. Apple в ответе разработчикам пишет, что Web Speech API получает только предустановленные голоса. Поэтому для китайского часто доступна одна Tingting.</p><p>Что можно сделать: «Ещё → Настройки → Голос» — если там есть другие китайские голоса, выберите. Там же можно сделать речь медленнее.</p><p>Обход: включите в настройках iPhone «Проговаривание» (Speak Selection) в том же разделе озвучивания текста. Тогда можно выделить текст фразы и нажать «Произнести» — iOS прочитает выбранным в настройках голосом.</p>`],
   ["Как обновить приложение", `<p>При интернете новая версия скачивается сама — внизу появится «Доступна новая версия → Обновить». Вручную: «Ещё → Настройки → Проверить сейчас». Если не помогает или что-то сломалось — «Переустановить офлайн-файлы» (данные сохранятся, нужен интернет).</p>`],
   ["Работает ли без интернета", `<p>Да, всё, кроме «Спросить Claude». Нужно один раз открыть приложение с иконки на экране «Домой» при интернете. Индикатор «онлайн / офлайн» — справа вверху главной.</p>`],
   ["Как установить на iPhone", `<p>Откройте сайт в Safari → «Поделиться» → «На экран „Домой“». Дальше запускайте с иконки.</p>`],
-  ["Старые или лишние данные (например, чужой отель в местах)", `<p>Одно место — «Такси» → ✎ у места → «Удалить место». Всё сразу — «Ещё → Настройки → Сброс данных»: недавние, мои места, главная, скрытые карточки, избранное или все данные.</p>`],
+  ["Старые или лишние данные (например, чужой отель в местах)", `<p>Одно место — «Такси» → свайп влево по месту или ✎ → «Удалить место». Всё сразу — «Ещё → Настройки → Сброс данных»: недавние, мои места, главная, скрытые карточки, избранное или все данные.</p>`],
   ["Резервная копия и новый телефон", `<p>Все данные хранятся только на этом устройстве. «Ещё → Настройки → Сохранить копию» — файл в «Файлы»; на новом телефоне — «Восстановить».</p>`],
   ["Кириллица и тоны", `<p>Кириллица — приблизительное звучание, без тонов. Тон показан в pinyin значком над гласной (ā á ǎ à). Правила чтения — «Ещё → Слоги». Если сомневаетесь — просто покажите карточку.</p>`],
 ];
 function drawFaq() {
-  $("v-faq").innerHTML = `<h2 style="margin-top:4px">Помощь и FAQ</h2>` + FAQ.map(([q, a]) => `<details><summary>${esc(q)}</summary>${a}</details>`).join("") +
+  $("v-faq").innerHTML = `<h2 style="margin-top:4px">Помощь и FAQ</h2><div class="row" style="margin-bottom:6px"><button class="btn" data-faq="intro" style="font-size:14px">Показать вводный гайд</button><button class="btn" data-faq="news" style="font-size:14px">Что нового</button></div>` + FAQ.map(([q, a]) => `<details><summary>${esc(q)}</summary>${a}</details>`).join("") +
     `<p class="muted" style="margin-top:14px">Не нашли ответ — откройте <a href="https://github.com/aleksandrkaiser/cn-trainer/issues" target="_blank" rel="noopener" style="color:var(--cy)">issues на GitHub</a>.</p>`;
+  $("v-faq").onclick = e => { const b = e.target.closest("[data-faq]"); if (!b) return; if (b.dataset.faq === "intro") showIntro(); else showNews(0); };
+}
+
+// ---- вводный гайд (первый запуск) и «Что нового» (после обновления)
+const APP_REV = 12;  // номер редакции; cn:ver — последняя редакция, которую видел пользователь (до ред. 12 не хранилась → 11)
+const CHANGES = [
+  {rev: 12, date: "22.10.2026", items: [
+    "Новая вкладка «Словарь»: все разделы по алфавиту. С главной разделы убраны.",
+    "Главная: «Избранное» и «Недавние» с подсказками, ＋ добавляет фразы в избранное через Словарь. Скрыть можно любой блок, один остаётся.",
+    "Жесты как в iOS: свайп от левого края — назад; свайп по строке влево — «Удалить» (избранное, недавние, мои места).",
+    "Двойной тап больше не увеличивает страницу.",
+    "Уроки пересобраны: 12 уроков по ситуациям — знакомство, числа, цены, магазин, такси, поезд, отель, еда. Прогресс старых уроков сброшен.",
+    "Словарь: «Слышите в ответ» разнесён по темам, вокзалы — в «Поезде», пауэрбанк — в «Отеле», в «Здоровье» — 110, 120 и 报警.",
+    "Вводный гайд и «Что нового» — в «Ещё → Помощь и FAQ».",
+  ]},
+];
+const INTRO = [
+  {big: "你好", h: "Помощник по фразам для поездки в Китай", body: `<p>Нужная фраза за пару секунд: иероглифы, pinyin, произношение кириллицей «как слышится» и перевод.</p><p>Покажите фразу собеседнику крупно или включите озвучку. Немного поучиться — тоже здесь: карточки и уроки.</p><p>Работает без интернета. Ваши данные хранятся только на этом телефоне.</p>`},
+  {big: "🔎", h: "Главная", body: `<ul><li><b>Поиск</b> — по-русски, pinyin без тонов, кириллицей или иероглифами.</li><li><b>Кнопки</b> сверху — Такси, «Не говорю», «Помощь». Свои — через «⚙ Настроить главную» или 📌 у любой фразы.</li><li><b>★ Избранное</b> — то, что нужно часто. ＋ — добавить.</li><li><b>Недавние</b> — последние открытые фразы.</li></ul>`},
+  {big: "A+", h: "Показ крупно", body: `<p>Нажмите фразу — она откроется на весь экран для собеседника.</p><ul><li>A− / A+ — размер, ⟳ — поворот</li><li>🔊 — озвучка (в беззвучном режиме iPhone молчит)</li><li>☆ — в избранное, 📌 — кнопкой на главную</li><li>свайп — соседняя фраза</li></ul>`},
+  {big: "词", h: "Нижняя панель", body: `<ul><li><b>Словарь</b> — все разделы по алфавиту.</li><li><b>Показать</b> — избранное карточками.</li><li><b>Ещё</b> — Мои места (адреса для такси), Карточки, Уроки, Справка, Настройки, Помощь.</li></ul><p>Назад — свайп от левого края экрана. Удалить строку — свайп по ней влево.</p>`},
+];
+let introI = 0, introDone = null;
+function overlayOpen() { if ($("intro").classList.contains("hide")) { $("intro").classList.remove("hide"); navPush(overlayCloseNow); } }
+function overlayCloseNow() { if ($("intro").classList.contains("hide")) return; $("intro").classList.add("hide"); $("intro").innerHTML = ""; const f = introDone; introDone = null; if (f) f(); }
+function overlayClose() { if (!navBack()) overlayCloseNow(); }
+function showIntro() { introI = 0; overlayOpen(); drawIntro(); }
+function drawIntro() {
+  const s = INTRO[introI], last = introI === INTRO.length - 1, I = $("intro");
+  I.dataset.mode = "intro";
+  I.innerHTML = `<div class="itop"><button data-in="skip"${last ? ' class="hide"' : ""}>Пропустить</button></div><div class="ibody"><div class="ibig">${s.big}</div><h3>${s.h}</h3>${s.body}</div>` +
+    `<div class="dots">${INTRO.map((_, i) => `<i class="${i === introI ? "on" : ""}"></i>`).join("")}</div>` +
+    `<div class="row" style="margin:0">${introI ? `<button class="btn" data-in="prev">‹ Назад</button>` : ""}<button class="btn yes" data-in="next">${last ? "Начать" : "Далее ›"}</button></div>`;
+}
+function showNews(seen) {
+  const list = CHANGES.filter(c => c.rev > seen).sort((a, b) => b.rev - a.rev), I = $("intro");
+  overlayOpen(); I.dataset.mode = "news";
+  I.innerHTML = `<div class="itop"></div><div class="ibody" style="justify-content:flex-start"><div class="ibig" style="font-size:40px">✨</div><h3>${seen ? "Обновление установлено" : "Что нового"}</h3>` +
+    list.map(c => `<p><b>Версия ${c.rev}</b> · ${esc(c.date)}</p><ul>${c.items.map(x => `<li>${esc(x)}</li>`).join("")}</ul>`).join("") +
+    `<p class="ver">Установлена версия ${APP_REV} (${esc(DATA.built)}). Список изменений — «Ещё → Помощь и FAQ → Что нового».</p></div><div class="row" style="margin:0"><button class="btn yes" data-in="ok">Понятно</button></div>`;
+}
+$("intro").onclick = e => {
+  const b = e.target.closest("[data-in]"); if (!b) return; const k = b.dataset.in;
+  if (k === "skip" || k === "ok" || (k === "next" && introI === INTRO.length - 1)) return overlayClose();
+  if (k === "next") introI++; if (k === "prev") introI = Math.max(0, introI - 1);
+  drawIntro();
+};
+function startupNotes() {
+  if (!store.get("onboarded", 0)) {
+    if (FRESH) { introDone = () => { store.set("onboarded", 1); store.set("ver", APP_REV); }; return showIntro(); }
+    store.set("onboarded", 1);  // приложением уже пользовались до ред. 12 — гайд не показываем
+  }
+  const seen = store.get("ver", 11);
+  if (seen < APP_REV) { store.set("ver", APP_REV); showNews(seen); }
 }
 
 $("deck").onchange = () => { store.set("deck", $("deck").value); resetCards(); render(); };
@@ -1139,11 +1369,15 @@ function render() {
   if (view === "gd") drawGuide();
   if (view === "learn") { if (!cur || !visibleCards().some(c => c.id === cur.id)) { resetCards(); nextCard(); } else drawCard(); }
   if (view === "quiz") newQ();
+  if (view === "dict") drawDict();
   if (view === "list") drawList();
   if (view === "syl") drawSyl();
 }
 $("deck").parentElement.classList.add("hide");
+$("lesdesc").textContent = `${DATA.lessons.length} уроков по ситуациям: знакомство, цены, магазин, такси, поезд, отель, еда`;
 render();
+onSwipe($("intro"), d => { if ($("intro").dataset.mode !== "intro") return; introI = Math.max(0, Math.min(INTRO.length - 1, introI - d)); drawIntro(); });
+startupNotes();
 
 // ---- офлайн-кэш и обновления: новая версия ставится в фоне, страница предлагает перезапуск
 let swReg = null;

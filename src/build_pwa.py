@@ -11,6 +11,8 @@ ph = {k: [[z, p, to_cyr(p), r] for z, p, r in v] for k, v in PHRASES.items()}
 signs = [[z, p, to_cyr(p), r, g] for z, p, r, g in SIGNS]
 nums = [[z, p, to_cyr(p), r] for z, p, r in NUMBERS]
 st = [[z, p, to_cyr(p), r] for z, p, r in BEIJING_STATIONS]
+# в тренажёре вокзалы — часть раздела «Поезд» (в PDF — отдельная страница)
+ph["Поезд"] = ph["Поезд"] + st
 show = [dict(c, cy=to_cyr(c["py"])) for c in SHOW_CARDS]
 groups = [("Без согласного (a, e, o, y-, w-)", [""]), ("b p m f", list("bpmf")), ("d t n l", list("dtnl")),
           ("g k h", list("gkh")), ("j q x", list("jqx")), ("zh ch sh r", ["zh", "ch", "sh", "r"]), ("z c s", list("zcs"))]

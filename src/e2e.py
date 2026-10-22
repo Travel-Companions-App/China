@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """Сквозной тест тренажёра в headless Chromium (Playwright).
 
-Проходит главную (поиск, недавние, избранное, разделы), показ крупно, «Мои места» → такси,
-все уроки, справку, карточки, тест, настройки; затем проверяет офлайн-перезагрузку и баннер обновления.
+Проходит вводный гайд, главную (поиск, недавние, избранное, подсказки), Словарь, жесты (назад, свайп-удаление),
+показ крупно, «Мои места» → такси, все уроки, справку, карточки, тест, настройки, «Что нового»;
+затем проверяет офлайн-перезагрузку, баннер обновления и полный сброс.
 
     python3 src/e2e.py            # тест
     python3 src/e2e.py --shots    # + скриншоты для README в docs/screenshots/
@@ -40,17 +41,36 @@ with sync_playwright() as p:
     if SHOTS: os.makedirs(os.path.join(OUT, "docs", "screenshots"), exist_ok=True)
     ev = pg.evaluate
 
+    # свайп пальцем: touchstart → touchmove × 6 → touchend (Chromium с has_touch)
+    pg.add_init_script("""window.__swipe = (sel, dx) => { const el = document.querySelector(sel), r = el.getBoundingClientRect(), y = r.top + r.height / 2, x = r.left + r.width * .7;
+      const T = x => new Touch({identifier: 1, target: el, clientX: x, clientY: y}), fire = (t, x, on) => el.dispatchEvent(new TouchEvent(t, {touches: on ? [T(x)] : [], changedTouches: [T(x)], bubbles: true, cancelable: true}));
+      fire('touchstart', x, 1); for (let i = 1; i <= 6; i++) fire('touchmove', x + dx * i / 6, 1); fire('touchend', x + dx, 0); return true; };""")
     pg.goto(URL); pg.wait_for_function("typeof render === 'function' && document.querySelector('#hq') !== null", timeout=15000)
     check(not errors, "страница загрузилась без ошибок JS" + ("" if not errors else ": " + errors[0]))
     if errors: sys.exit(1)
+    swipe = lambda sel, dx: ev(f"__swipe({sel!r}, {dx})")
+
+    print("Вводный гайд")
+    check(pg.is_visible("#intro") and ev("$('intro').dataset.mode") == "intro", "при первом запуске показан гайд")
+    titles = []
+    for _ in range(4): titles.append(pg.locator("#intro h3").inner_text()); pg.click("#intro [data-in=next]")
+    check(len(set(titles)) == 4 and not pg.is_visible("#intro"), "4 экрана гайда, «Начать» закрывает: " + " | ".join(titles))
+    check(ev("store.get('onboarded') === 1 && store.get('ver') === APP_REV"), "гайд отмечен как показанный")
     ev("navigator.serviceWorker.ready.then(() => true)")
     pg.reload(); pg.wait_for_selector("#hq"); check(ev("!!navigator.serviceWorker.controller"), "service worker управляет страницей")
+    check(not pg.is_visible("#intro"), "после перезапуска гайд и «Что нового» не показываются")
     print("Главная")
     check(pg.locator(".hero h1").inner_text().startswith("你好"), "заголовок")
     check(pg.locator(".qk").count() == 3, "три быстрые кнопки")
-    n = pg.locator("#hbody .sec").count(); check(n >= 15, f"разделы на главной: {n}")
-    check(pg.locator("#tabs button").count() == 3, "вкладки: Главная / Показать / Ещё")
+    check(pg.locator("#hbody .sec").count() == 0 and "Разделы" not in pg.locator("#hbody").inner_text(), "разделов на главной нет")
+    check(pg.locator("#tabs button").all_inner_texts() == ["你\nГлавная", "词\nСловарь", "📋\nПоказать", "⋯\nЕщё"], "вкладки: Главная / Словарь / Показать / Ещё")
     check("Фраза дня" not in pg.locator("#hbody").inner_text() and "Урок" not in pg.locator("#hbody").inner_text(), "на главной нет фразы дня и уроков")
+    hs = [h.strip().lower() for h in pg.locator("#hbody h2").all_inner_texts()]; check(hs == ["★ избранное", "недавние"], "порядок блоков: избранное, недавние: " + ", ".join(hs))
+    check(pg.locator("#hbody .addfav").count() == 1, "пустое избранное: большая кнопка «＋ Добавить в избранное»")
+    check("последние 12 фраз" in pg.locator("#hbody").inner_text(), "пустые недавние: подсказка")
+    check(ev("getComputedStyle(document.querySelector('#tabs button')).touchAction") == "manipulation", "двойной тап не увеличивает (touch-action: manipulation)")
+    pg.click("#hbody .addfav"); check(ev("view") == "dict" and pg.locator("#v-dict .hintbox").count() == 1, "＋ открывает Словарь с подсказкой про ☆")
+    pg.click("#tabs [data-v=home]")
 
     print("Поиск")
     for q, min_n in [("вода", 3), ("shui", 3), ("水", 3), ("туалет", 2), ("дзи-чанг", 1), ("Alipay", 2)]:
@@ -63,11 +83,34 @@ with sync_playwright() as p:
     i0 = ev("fullS.i"); pg.keyboard.press("ArrowRight"); check(ev("fullS.i") == i0 + 1, "листание к следующему результату")
     pg.click("[data-f=close]"); pg.fill("#hq", ""); pg.dispatch_event("#hq", "input")
 
-    print("Главная: недавние, избранное, разделы")
+    print("Главная: недавние, избранное")
     check(pg.locator("#hbody h2", has_text="Недавние").count() == 1 and pg.locator("#hbody .hrow").count() >= 2, "недавние и избранное на главной")
-    pg.locator("#hbody .hrow").first.click(); check(pg.is_visible("#full"), "недавняя фраза открывается крупно"); pg.click("[data-f=close]")
-    pg.click("#hbody [data-sec='Фразы: Такси']")
-    check(ev("view") == "list" and pg.locator("#list .item").count() == ev("DATA.phrases['Такси'].length"), "раздел «Такси» открывается списком")
+    check(pg.locator("#hbody .addfav").count() == 0 and pg.locator("#hbody .hhead .plus").count() == 1, "избранное не пустое: маленький ＋ в заголовке")
+    pg.locator("#hbody .hrow").first.click(); check(pg.is_visible("#full"), "недавняя фраза открывается крупно")
+    pg.go_back(); pg.wait_for_function("!fullS"); check(not pg.is_visible("#full"), "«назад» (свайп от края) закрывает показ крупно")
+    pg.click("#hq"); pg.fill("#hq", "туалет"); pg.locator("#hres .ritem").nth(1).click(); pg.click("[data-f=close]"); pg.fill("#hq", ""); pg.dispatch_event("#hq", "input")
+    n = ev("recent().length"); swipe("#hbody .sw[data-sw^='recent:']", -150)
+    check(pg.locator("#hbody .sw.open").count() == 1, "свайп влево по недавней фразе открывает «Удалить»")
+    pg.click("#hbody .sw.open .swdel"); check(ev("recent().length") == n - 1, f"«Удалить» убирает из недавних: {n} → {n - 1}")
+    swipe("#hbody .sw[data-sw^='recent:']", -150); pg.click("#hq"); check(pg.locator("#hbody .sw.open").count() == 0 and ev("recent().length") == n - 1, "тап мимо закрывает «Удалить» без удаления")
+
+    print("Словарь")
+    pg.click("#tabs [data-v=dict]")
+    names = pg.locator("#v-dict .sec").evaluate_all("bs => bs.map(b => b.firstChild.textContent)")
+    check(names == ev("ns => ns.slice().sort((a, b) => a.localeCompare(b, 'ru'))", names), "разделы по алфавиту: " + ", ".join(names[:4]) + "…")
+    check(len(names) == ev("Object.keys(DATA.phrases).length + 1") and "Слышите в ответ" not in names and "Вокзалы" not in names, f"разделов: {len(names)} (фразы + вывески)")
+    check(pg.locator("#v-dict .hintbox").count() == 0, "без ＋ подсказки про избранное нет")
+    shot("6-dict")
+    pg.click("#v-dict [data-sec='Фразы: Такси']")
+    check(ev("view") == "list" and pg.locator("#list .item").count() == ev("DATA.phrases['Такси'].length") and pg.locator("#ltitle").inner_text() == "Такси", "раздел «Такси» открывается списком")
+    check(pg.is_visible("#tabs [data-v=dict].on"), "вкладка «Словарь» подсвечена")
+    pg.locator("#list [data-fv]").first.click(); check(ev("Object.keys(favs).length") == 2, "☆ в разделе добавляет в избранное"); pg.locator("#list [data-fv]").first.click()
+    pg.click("#lback"); check(ev("view") == "dict", "«‹ Словарь» возвращает к разделам")
+    pg.click("#v-dict [data-sec='Фразы: Поезд']"); t = pg.locator("#list").inner_text()
+    check("北京南站" in t and "餐车" in t, "вокзалы — в разделе «Поезд»")
+    pg.go_back(); pg.wait_for_function("view === 'dict'"); check(True, "«назад» (свайп от края) из раздела → Словарь")
+    pg.click("#v-dict [data-sec='Фразы: Здоровье']"); t = pg.locator("#list").inner_text()
+    check("110" in t and "120" in t and "报警" in t and "充电宝" not in t, "«Здоровье»: 110, 120, 报警; пауэрбанк — не здесь")
     pg.click("#tabs [data-v=home]")
 
     print("Показ крупно")
@@ -95,6 +138,9 @@ with sync_playwright() as p:
     check("Ресторан у дома" in pg.locator("#v-places").inner_text(), "место изменено")
     ev("window.confirm = () => true; 0"); pg.click("#v-places [data-e='0']"); pg.click("[data-a=del]")
     check(pg.locator("#v-places [data-p]").count() == 2, "место удалено")
+    pg.click("[data-a=add]"); pg.go_back(); pg.wait_for_function("placeEdit === null"); check(pg.locator("#v-places [data-p]").count() == 2, "«назад» закрывает форму места без сохранения")
+    pg.click("[data-a=add]"); pg.fill("#pf-zh", "临时"); pg.click("[data-a=save]"); check(pg.locator("#v-places [data-p]").count() == 3, "временное место добавлено")
+    swipe("#v-places .sw", -150); pg.click("#v-places .sw.open .swdel"); check(pg.locator("#v-places [data-p]").count() == 2 and "临时" not in pg.locator("#v-places").inner_text(), "свайп влево → «Удалить» удаляет место")
     pg.click("[data-a=map]"); check("地图" in pg.locator("#full .zh").inner_text(), "«Покажу на карте» → карточка"); pg.click("[data-f=close]")
     pg.click("#v-places [data-p='1']"); pg.click("[data-f=pin]"); pg.click("[data-f=close]")
     pg.click("#tabs [data-v=home]"); n = pg.locator(".qk").count(); check(n == 4, f"📌 добавил место кнопкой на главную: {n} кнопки")
@@ -106,6 +152,8 @@ with sync_playwright() as p:
 
     print("Уроки")
     pg.click("#tabs [data-v=more]"); pg.click("[data-go=les]")
+    check(ev("DATA.lessons.length") == 12 and ev("localStorage.getItem('cn:les')") is None, "12 уроков, старый прогресс сброшен")
+    pg.click("[data-l='3']"); check(ev("lesState.l.n") == 3, "урок открыт"); pg.go_back(); pg.wait_for_function("lesState === null"); check(pg.locator("[data-l]").count() == 12, "«назад» из урока → список уроков")
     for n in range(1, ev("DATA.lessons.length") + 1):
         pg.click(f"[data-l='{n}']"); pg.click("[data-a=start]"); steps = 0
         while ev("lesState.mode") == "ex" and steps < 200:
@@ -148,7 +196,8 @@ with sync_playwright() as p:
     pg.click("#bHidden")
     pg.click("#fc"); pg.click("#bHide"); check(ev("Object.keys(hidden).length") == 1, "скрытие для проверки перезапуска")
     pg.click("#tabs [data-v=more]"); pg.click("[data-go=quiz]"); pg.locator("#qopts .opt").first.click(); check(ev("score.n") == 1, "тест отвечает")
-    pg.click("#tabs [data-v=more]"); pg.click("[data-go=list]"); pg.fill("#q", "метро"); check(pg.locator("#list .item").count() >= 2, "список фраз с поиском")
+    check(pg.locator("#v-more [data-go=list]").count() == 0, "в «Ещё» нет дубля «Фразы и вывески»")
+    pg.click("#tabs [data-v=dict]"); pg.click("#v-dict [data-sec='Все вывески']"); pg.fill("#q", "метро"); check(pg.locator("#list .item").count() >= 1, "поиск внутри раздела «Вывески»")
     pg.locator("#list .item").first.click(); check(pg.is_visible("#full"), "фраза из списка открывается крупно"); pg.click("[data-f=close]")
     pg.click("#tabs [data-v=more]"); pg.click("[data-go=syl]"); check(pg.locator(".syl").count() == 406, "406 слогов")
 
@@ -172,9 +221,13 @@ with sync_playwright() as p:
     shot("1-home")
 
     print("Настройка главной")
-    pg.click("[data-h=edit]"); check(pg.locator("[data-blk]").count() == 4, "редактор: 4 блока")
+    pg.click("[data-h=edit]"); check(pg.locator("[data-blk]").count() == 3, "редактор: 3 блока (кнопки, избранное, недавние)")
     pg.click("[data-mv='b:1:1']"); pg.click("[data-he=done]")
-    hs = [h.strip().lower() for h in pg.locator("#hbody h2").all_inner_texts()]; check(hs[:2] == ["★ избранное", "недавние"], "недавние опущены ниже избранного: " + ", ".join(hs))
+    hs = [h.strip().lower() for h in pg.locator("#hbody h2").all_inner_texts()]; check(hs[:2] == ["недавние", "★ избранное"], "избранное опущено ниже недавних: " + ", ".join(hs))
+    pg.click("[data-h=edit]"); pg.click("[data-blk=quick]"); pg.click("[data-blk=fav]")
+    check(pg.is_disabled("[data-blk=recent]") and ev("layout().off.length") == 2, "последний видимый блок скрыть нельзя")
+    pg.go_back(); pg.wait_for_function("!homeEdit"); check(pg.locator(".qk").count() == 0 and pg.locator("#hbody h2").count() == 1, "«назад» выходит из настройки; виден один блок")
+    pg.click("[data-h=edit]"); pg.click("[data-blk=quick]"); pg.click("[data-blk=fav]"); pg.click("[data-he=done]")
     pg.click("[data-h=edit]"); pg.click("[data-blk=fav]"); pg.select_option("#qadd", "show:food"); pg.click("[data-mv='q:3:-1']"); pg.click("[data-he=done]")
     check(pg.locator("#hbody h2", has_text="Избранное").count() == 0, "блок «Избранное» скрыт")
     labels = pg.locator(".qk").all_inner_texts(); check(len(labels) == 4 and "Ресторан" in labels[2], "кнопка «Ресторан» добавлена и передвинута: " + " | ".join(l.replace("\n", " ") for l in labels))
@@ -183,7 +236,9 @@ with sync_playwright() as p:
 
 
     print("Помощь и настройки")
-    pg.click("#tabs [data-v=more]"); pg.click("[data-go=faq]"); n = pg.locator("#v-faq details").count(); check(n >= 12, f"FAQ: {n} вопросов")
+    pg.click("#tabs [data-v=more]"); pg.click("[data-go=faq]"); n = pg.locator("#v-faq details").count(); check(n >= 15, f"FAQ: {n} вопросов")
+    pg.click("[data-faq=intro]"); check(pg.is_visible("#intro") and ev("$('intro').dataset.mode") == "intro", "гайд можно открыть из FAQ")
+    pg.click("#intro [data-in=skip]"); check(not pg.is_visible("#intro") and ev("view") == "faq", "«Пропустить» возвращает в FAQ")
     pg.locator("#v-faq summary", has_text="Tingting").click(); check(pg.locator("#v-faq details[open]").count() == 1, "ответ раскрывается")
     pg.click("#tabs [data-v=more]"); pg.click("[data-go=set]")
     check(pg.locator("#v-set h2", has_text="Голос").count() == 1 and pg.locator("#vrate").count() == 1, "настройки голоса")
@@ -195,10 +250,23 @@ with sync_playwright() as p:
     ev("setTheme('auto')")
     check(ev("Object.keys(favs).length") == 1 and ev("Object.keys(hidden).length") == 1, "избранное и скрытые карточки сохранились после перезапуска")
 
+    print("Что нового")
+    ev("store.set('ver', 11); 0"); pg.reload(); pg.wait_for_selector("#hq")
+    check(pg.is_visible("#intro") and ev("$('intro').dataset.mode") == "news" and "Версия 12" in pg.locator("#intro").inner_text(), "после обновления с ред. 11 — «Что нового»")
+    pg.click("#intro [data-in=ok]"); check(not pg.is_visible("#intro"), "«Понятно» закрывает")
+    pg.reload(); pg.wait_for_selector("#hq"); check(not pg.is_visible("#intro"), "«Что нового» показывается один раз")
+    ev("localStorage.removeItem('cn:onboarded'); localStorage.removeItem('cn:ver'); 0"); pg.reload(); pg.wait_for_selector("#hq")
+    check(ev("$('intro').dataset.mode") == "news" and ev("store.get('onboarded')") == 1, "пользователю до ред. 12: без гайда, только «Что нового»")
+    pg.click("#intro [data-in=ok]")
+    fv = ev("JSON.stringify(favs)"); ev("""(() => { const id = 'Фразы: Слышите в ответ|稍等'; favs[id] = {id, zh: ['稍等'], py: 'shāo děng', cy: '', ru: 'подождите', t: 1}; hidden['Вокзалы|北京南站'] = 1;
+      store.set('favs', favs); store.set('hidden', hidden); return 0; })()"""); pg.reload(); pg.wait_for_selector("#hq")
+    check(ev("!!favs['Фразы: База|稍等'] && !!hidden['Фразы: Поезд|北京南站'] && !favs['Фразы: Слышите в ответ|稍等']"), "избранное и скрытые переехавших фраз перенесены на новые разделы")
+    ev(f"favs = {fv}; store.set('favs', favs); delete hidden['Фразы: Поезд|北京南站']; store.set('hidden', hidden); 0")
+
     print("Офлайн")
     ctx.set_offline(True); pg.reload(); pg.wait_for_selector("#hq")
     check("офлайн" in pg.locator("#net").inner_text(), "индикатор «офлайн»")
-    pg.click("#tabs [data-v=more]"); pg.click("[data-go=les]"); check(pg.locator("[data-l]").count() == 8, "уроки офлайн")
+    pg.click("#tabs [data-v=more]"); pg.click("[data-go=les]"); check(pg.locator("[data-l]").count() == 12, "уроки офлайн")
     pg.click("#tabs [data-v=home]"); pg.click("[data-q='0']"); check(pg.locator("#v-places [data-p]").count() == 2, "мои места офлайн")
     pg.click("#tabs [data-v=show]"); pg.locator("#shows .sc").first.click(); check(pg.is_visible("#full"), "показ офлайн")
     pg.click("[data-f=close]"); ctx.set_offline(False)
@@ -209,6 +277,12 @@ with sync_playwright() as p:
     ev("swReg.update()")
     try: pg.wait_for_selector("#upd:not(.hide)", timeout=10000); check(True, "баннер «Доступна новая версия»")
     except Exception: check(False, "баннер «Доступна новая версия»")
+
+    print("Полный сброс")
+    ev("$('upd').classList.add('hide'); go('set'); window.confirm = () => true; 0")  # баннер обновления закрывает низ экрана
+    with pg.expect_navigation(): pg.click("[data-s=clr-all]")
+    pg.wait_for_selector("#hq"); check(pg.is_visible("#intro") and ev("$('intro').dataset.mode") == "intro", "после «Удалить все данные» снова вводный гайд")
+    check(ev("places().length") == 0 and ev("Object.keys(favs).length") == 0, "данные удалены")
 
     check(not errors, "ошибок JS нет" + ("" if not errors else ": " + "; ".join(errors[:5])))
     b.close()
