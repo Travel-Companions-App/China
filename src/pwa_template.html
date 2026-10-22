@@ -179,12 +179,13 @@ h2{font-size:13px;color:var(--acc);margin:20px 0 2px;text-transform:uppercase;le
   </section>
   <section id="v-learn" class="hide">
     <div class="srsrow" id="lstat"></div>
-    <div class="bar"><i id="lbar"></i></div>
     <label class="muted"><input type="checkbox" id="rev"> Наоборот: русский → китайский</label><br><label class="muted"><input type="checkbox" id="pyf"> Pinyin сразу (вместе с иероглифами)</label>
     <div class="fc" id="fc" style="margin-top:10px"></div>
-    <div class="row"><button class="btn no" id="bNo">Не знаю</button><button class="btn" id="bSay">🔊</button><button class="btn yes" id="bYes">Знаю</button></div>
-    <p class="muted" style="text-align:center;margin:8px 0 0">Свайп вправо — знаю, влево — не знаю. Знакомые карточки вернутся через 1, 3, 7, 16, 35 дней.</p>
-    <div class="row"><button class="btn" id="bReset" style="font-size:14px">Сбросить прогресс колоды</button></div>
+    <div class="row"><button class="btn" id="bBack">‹ Назад</button><button class="btn" id="bSay" style="flex:.6">🔊</button><button class="btn yes" id="bNext">Дальше ›</button></div>
+    <div class="row"><button class="btn" id="bHide">Знаю — не показывать</button></div>
+    <p class="muted" style="text-align:center;margin:8px 0 0">Нажмите карточку — перевод и произношение. Свайп влево — дальше, вправо — назад.</p>
+    <div class="row"><button class="btn" id="bHidden" style="font-size:14px"></button></div>
+    <div id="lhid"></div>
   </section>
   <section id="v-quiz" class="hide">
     <div class="muted" id="qstat"></div>
@@ -202,7 +203,7 @@ h2{font-size:13px;color:var(--acc);margin:20px 0 2px;text-transform:uppercase;le
     <button class="li" data-go="list"><span class="n">🔎</span><span class="tt"><div>Фразы и вывески</div><div class="muted">Весь разговорник списком, по разделам</div></span></button>
     <button class="li" data-go="places"><span class="n">📍</span><span class="tt"><div>Мои места</div><div class="muted">Адреса иероглифами → карточка для такси. Хранятся на этом iPhone</div></span></button>
     <button class="li" data-go="my"><span class="n">✍︎</span><span class="tt"><div>Мои фразы</div><div class="muted">Нет нужной фразы — спросите Claude и сохраните ответ офлайн</div></span></button>
-    <button class="li" data-go="learn"><span class="n">🃏</span><span class="tt"><div>Карточки</div><div class="muted">Интервальное повторение: фразы, вывески, слова уроков</div></span></button>
+    <button class="li" data-go="learn"><span class="n">🃏</span><span class="tt"><div>Карточки</div><div class="muted">Листайте фразы, вывески, слова уроков; знакомые — скрыть</div></span></button>
     <button class="li" data-go="quiz"><span class="n">✅</span><span class="tt"><div>Тест</div><div class="muted">Выбрать перевод</div></span></button>
     <button class="li" data-go="gd"><span class="n">🧭</span><span class="tt"><div>Справка</div><div class="muted">Жизнь в Китае: оплата, такси, поезда, связь — с источниками</div></span></button>
     <button class="li" data-go="les"><span class="n">📖</span><span class="tt"><div>Уроки</div><div class="muted">8 уроков: тоны, вопросы, числа, счётные слова</div></span></button>
@@ -284,17 +285,10 @@ const today = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.get
 const isoDay = t => { const d = new Date(t); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
 const parseDay = s => { const m = /^(\d{4})-(\d\d)-(\d\d)$/.exec(s || ""); return m ? new Date(+m[1], m[2] - 1, +m[3]).getTime() : null; };
 
-// ---- интервальное повторение (упрощённый Лейтнер): ящик 0 — новая, 1..5 — интервалы ниже
-const IVL = [0, 1, 3, 7, 16, 35];
-let srs = store.get("srs", null);
-if (!srs) {  // перенос старого прогресса «знаю»
-  srs = {}; const old = store.get("known", {});
-  for (const id in old) srs[id] = {b: 2, due: today() + IVL[2] * DAY};
-  store.set("srs", srs);
-}
-const isDue = c => srs[c.id] && srs[c.id].due <= today() && srs[c.id].b > 0;
-const isNew = c => !srs[c.id];
-const isLearned = c => srs[c.id] && srs[c.id].b >= 3;
+// ---- карточки: скрытые («знаю — не показывать»); старое интервальное повторение удалено
+try { localStorage.removeItem("cn:srs"); localStorage.removeItem("cn:known"); } catch {}
+let hidden = store.get("hidden", {});
+const isHidden = c => !!hidden[c.id];
 
 // ---- избранное: снимок фразы, чтобы показывать без поиска по данным
 let favs = store.get("favs", {});
@@ -433,54 +427,68 @@ function onSwipe(el, fn) {
 onSwipe($("full"), d => fullStep(-d));
 document.addEventListener("keydown", e => {
   if (fullS) { if (e.key === "Escape") closeFull(); if (e.key === "ArrowRight") fullStep(1); if (e.key === "ArrowLeft") fullStep(-1); return; }
-  if (view === "learn" && cur) { if (e.key === " ") { e.preventDefault(); $("fc").click(); } if (e.key === "ArrowRight") mark(true); if (e.key === "ArrowLeft") mark(false); }
+  if (view === "learn" && cur) { if (e.key === " ") { e.preventDefault(); $("fc").click(); } if (e.key === "ArrowRight") nextCard(); if (e.key === "ArrowLeft") prevCard(); }
   if (e.key === "/" && document.activeElement.tagName !== "INPUT") { e.preventDefault(); go("home", true); setTimeout(() => $("hq") && $("hq").focus(), 0); }
 });
 
-// ---- flashcards
-let cur = null, flipped = false, again = [];
+// ---- flashcards: случайный порядок, история для «Назад», скрытые не показываются
+let cur = null, flipped = false, hist = [], hpos = -1, bag = [], showHid = false;
+function resetCards() { cur = null; hist = []; hpos = -1; bag = []; }
+const visibleCards = () => cards().filter(c => !isHidden(c));
 function nextCard() {
-  const cs = cards();
-  // порядок: ошибки этой сессии (через 3 карточки) → к повторению → новые → «всё выучено» случайно
-  const due = cs.filter(isDue), fresh = cs.filter(isNew);
-  let pool = due.length ? due : fresh.length ? fresh : cs;
-  if (again.length && (again[0].wait-- <= 0 || (!due.length && !fresh.length))) { const id = again.shift().id; const c = cs.find(x => x.id === id); if (c) { cur = c; flipped = false; return drawCard(); } }
-  pool = pool.filter(c => c !== cur || pool.length === 1);
-  cur = pool.length ? pool[Math.floor(Math.random() * pool.length)] : null; flipped = false; drawCard();
+  const cs = visibleCards();
+  if (hpos < hist.length - 1) { hpos++; cur = cs.find(c => c.id === hist[hpos]) || null; if (cur) { flipped = false; return drawCard(); } hist.splice(hpos); hpos = hist.length - 1; }
+  if (!cs.length) { cur = null; return drawCard(); }
+  const ids = new Set(cs.map(c => c.id));
+  bag = bag.filter(id => ids.has(id));
+  if (!bag.length) { bag = shuffle(cs.map(c => c.id)); if (bag.length > 1 && cur && bag[0] === cur.id) bag.push(bag.shift()); }
+  const id = bag.shift(); cur = cs.find(c => c.id === id);
+  hist.push(id); if (hist.length > 300) hist.shift(); hpos = hist.length - 1; flipped = false; drawCard();
+}
+function prevCard() {
+  const cs = visibleCards();
+  while (hpos > 0) { hpos--; const c = cs.find(x => x.id === hist[hpos]); if (c) { cur = c; flipped = false; return drawCard(); } }
 }
 function drawCard() {
-  const cs = cards(), k = cs.filter(isLearned).length, d = cs.filter(isDue).length, n = cs.filter(isNew).length;
-  $("lstat").innerHTML = `<span>К повторению <b>${d}</b></span>·<span>новых <b>${n}</b></span>·<span>выучено <b>${k}</b> из ${cs.length}</span>`;
-  $("lbar").style.width = (cs.length ? 100 * k / cs.length : 0) + "%";
-  if (!cur) { $("fc").innerHTML = `<div class="muted">${cs.length ? "" : "Колода пуста — добавьте фразы в избранное звёздочкой ☆"}</div>`; return; }
-  const rev = $("rev").checked;
-  const pyf = $("pyf").checked;
+  const all = cards(), nh = all.filter(isHidden).length, cs = all.length - nh;
+  $("lstat").innerHTML = `<span>В колоде <b>${cs}</b></span>` + (nh ? `·<span>скрыто <b>${nh}</b> из ${all.length}</span>` : "");
+  $("bBack").disabled = hpos <= 0;
+  $("bHidden").textContent = showHid ? "Спрятать список скрытых" : `Скрытые (${nh})`; $("bHidden").parentElement.classList.toggle("hide", !nh && !showHid);
+  drawHidden();
+  if (!cur) { $("fc").innerHTML = `<div class="muted">${all.length ? (cs ? "" : "Все карточки колоды скрыты — верните нужные из списка «Скрытые»") : "Колода пуста — добавьте фразы в избранное звёздочкой ☆"}</div>`; return; }
+  const rev = $("rev").checked, pyf = $("pyf").checked;
   const front = rev ? `<div class="ru" style="font-size:24px">${esc(cur.ru)}</div>` : `<div class="zh">${esc(cur.zh)}</div>` + (pyf ? `<div class="py">${esc(cur.py)}</div>` : "");
   const back = rev ? `<div class="zh">${esc(cur.zh)}</div><div class="py">${esc(cur.py)}</div><div class="cy">${esc(cur.cy)}</div>`
                    : (pyf ? "" : `<div class="py">${esc(cur.py)}</div>`) + `<div class="cy">${esc(cur.cy)}</div><div class="ru">${esc(cur.ru)}</div>`;
-  $("fc").innerHTML = front + (flipped ? back : `<div class="hint muted">нажмите — перевернуть</div>`) + `<div class="hint muted">${esc(cur.deck)}</div>`;
+  $("fc").innerHTML = front + (flipped ? back : `<div class="hint muted">нажмите — перевод и произношение</div>`) + `<div class="hint muted">${esc(cur.deck)}</div>`;
 }
-$("fc").onclick = () => { flipped = !flipped; drawCard(); if (flipped) say(cur.zh); };
-function mark(ok) {
-  if (!cur) return;
-  const s = srs[cur.id] || {b: 0, due: 0};
-  if (ok) { s.b = Math.min(IVL.length - 1, s.b + 1); s.due = today() + IVL[s.b] * DAY; again = again.filter(a => a.id !== cur.id); }
-  else { s.b = 1; s.due = today(); if (!again.some(a => a.id === cur.id)) again.push({id: cur.id, wait: 3}); }
-  srs[cur.id] = s; store.set("srs", srs); nextCard();
+function drawHidden() {
+  const list = cards().filter(isHidden);
+  $("lhid").innerHTML = showHid ? (list.length ? `<div class="row"><button class="btn" data-uh="*" style="font-size:14px">Вернуть все (${list.length})</button></div>` : "") + list.map((c, i) => `<div class="item"><div class="zh">${esc(c.zh)}</div><div class="t"><div class="py">${esc(c.py)}</div><div>${esc(c.ru)}</div></div><button class="btn" data-uh="${esc(c.id)}" style="flex:none;font-size:14px;padding:10px">Вернуть</button></div>`).join("") : "";
 }
-$("bYes").onclick = () => mark(true);
-$("bNo").onclick = () => mark(false);
+$("lhid").onclick = e => {
+  const b = e.target.closest("[data-uh]"); if (!b) return;
+  if (b.dataset.uh === "*") { for (const c of cards()) delete hidden[c.id]; } else delete hidden[b.dataset.uh];
+  store.set("hidden", hidden); bag = []; if (!cur) nextCard(); else drawCard();
+};
+$("fc").onclick = () => { if (!cur) return; flipped = !flipped; drawCard(); if (flipped) say(cur.zh); };
+$("bNext").onclick = () => nextCard();
+$("bBack").onclick = () => prevCard();
 $("bSay").onclick = () => cur && say(cur.zh);
-$("bReset").onclick = () => { if (!confirm("Сбросить прогресс этой колоды?")) return; cards().forEach(c => delete srs[c.id]); store.set("srs", srs); again = []; nextCard(); };
+$("bHide").onclick = () => {
+  if (!cur) return; hidden[cur.id] = 1; store.set("hidden", hidden);
+  const id = cur.id; hist = hist.filter(x => x !== id); hpos = hist.length - 1; nextCard();
+};
+$("bHidden").onclick = () => { showHid = !showHid; drawCard(); };
 $("rev").onchange = drawCard;
 $("pyf").checked = store.get("pyf", true);
 $("pyf").onchange = () => { store.set("pyf", $("pyf").checked); drawCard(); };
-onSwipe($("fc"), d => mark(d > 0));
+onSwipe($("fc"), d => d > 0 ? prevCard() : nextCard());
 
 // ---- quiz
 let q = null, score = {ok: 0, n: 0};
 function newQ() {
-  const cs = cards();
+  const cs = visibleCards().length ? visibleCards() : cards();
   const right = cs[Math.floor(Math.random() * cs.length)];
   const wrong = [];
   const okW = c => c !== right && c.ru !== right.ru && !wrong.some(w => w.ru === c.ru);
@@ -982,15 +990,15 @@ function drawSettings() {
     if (k === "exp") exportData();
     if (k === "imp") $("impf").click();
     if (k === "upd") { $("updst").textContent = navigator.onLine ? "Проверяю…" : "Нет интернета."; if (swReg && navigator.onLine) swReg.update().then(() => { setTimeout(() => { if ($("updst")) $("updst").textContent = $("upd").classList.contains("hide") ? "Установлена последняя версия." : "Есть новая версия — нажмите «Обновить» внизу."; }, 2500); }).catch(() => { $("updst").textContent = "Не удалось проверить."; }); }
-    if (k === "reset" && confirm("Сбросить прогресс уроков и карточек, избранное и недавние? Мои места и мои фразы сохранятся.")) {
-      for (const key of ["srs", "known", "les", "dlg", "favs", "recent"]) localStorage.removeItem("cn:" + key);
+    if (k === "reset" && confirm("Сбросить прогресс уроков, скрытые карточки, избранное и недавние? Мои места и мои фразы сохранятся.")) {
+      for (const key of ["srs", "known", "hidden", "les", "dlg", "favs", "recent"]) localStorage.removeItem("cn:" + key);
       location.reload();
     }
   };
   $("impf").onchange = e => e.target.files[0] && importData(e.target.files[0]);
 }
 
-$("deck").onchange = () => { store.set("deck", $("deck").value); cur = null; again = []; render(); };
+$("deck").onchange = () => { store.set("deck", $("deck").value); resetCards(); render(); };
 function render() {
   if (view === "home") drawHome();
   if (view === "places") drawPlaces();
@@ -999,7 +1007,7 @@ function render() {
   if (view === "show") drawShows();
   if (view === "les") drawLessons();
   if (view === "gd") drawGuide();
-  if (view === "learn") { if (!cur || !cards().includes(cur)) nextCard(); else drawCard(); }
+  if (view === "learn") { if (!cur || !visibleCards().some(c => c.id === cur.id)) { resetCards(); nextCard(); } else drawCard(); }
   if (view === "quiz") newQ();
   if (view === "list") drawList();
   if (view === "syl") drawSyl();
