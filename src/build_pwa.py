@@ -16,7 +16,6 @@ groups = [("Без согласного (a, e, o, y-, w-)", [""]), ("b p m f", l
           ("g k h", list("gkh")), ("j q x", list("jqx")), ("zh ch sh r", ["zh", "ch", "sh", "r"]), ("z c s", list("zcs"))]
 syl = [[t, [[x, syl_cyr(x)] for i in ini for x in SYLLABLES_BY_INITIAL[i].split()]] for t, ini in groups]
 from lessons import LESSONS
-from dialogs import DIALOGS
 from guide import GUIDE, CHECKED
 
 TONEMARK = {"a": "āáǎà", "e": "ēéěè", "i": "īíǐì", "o": "ōóǒò", "u": "ūúǔù", "ü": "ǖǘǚǜ"}
@@ -45,22 +44,12 @@ def lesson_json(l):
         ex.append(e)
     return dict(l, theory=th, ex=ex)
 
-def line(s):
-    return dict(s, cy=to_cyr(s["py"])) if s else None
-
-def dialog_json(d):
-    steps = []
-    for s in d["steps"]:
-        if s["who"] == "them": steps.append(line(s))
-        else: steps.append(dict(s, opts=[dict(a, cy=to_cyr(a["py"]), reply=line(a["reply"])) for a in s["opts"]]))
-    return dict(d, steps=steps)
-
 guide = [dict(g, phrases=[[z, p, to_cyr(p), r] for z, p, r in g["phrases"]]) for g in GUIDE]
 SITE = "https://aleksandrkaiser.github.io/cn-trainer/"
-trip = {k: [v[0], v[1], to_cyr(v[1])] if isinstance(v, tuple) else v for k, v in TRIP_CARDS.items()}
+place = {k: [v[0], v[1], to_cyr(v[1])] if isinstance(v, tuple) else v for k, v in PLACE_CARD.items()}
 data = {"phrases": ph, "signs": signs, "numbers": nums, "stations": st, "show": show, "tips": TIPS, "syllables": syl,
-        "lessons": [lesson_json(l) for l in LESSONS], "dialogs": [dialog_json(d) for d in DIALOGS],
-        "guide": guide, "checked": CHECKED, "hotel": HOTEL, "trip": trip}
+        "lessons": [lesson_json(l) for l in LESSONS],
+        "guide": guide, "checked": CHECKED, "place": place}
 tpl = open(os.path.join(SRC, "pwa_template.html"), encoding="utf-8").read()
 # версия = хеш шаблона и данных; дата сборки — дата последнего изменения контента (стабильна при пересборке без правок)
 body = json.dumps(data, ensure_ascii=False, sort_keys=True)
@@ -77,7 +66,7 @@ n_phr = sum(len(v) for v in PHRASES.values())
 jsonld = {"@context": "https://schema.org", "@type": "WebApplication", "name": "Китайский для туриста",
           "url": SITE, "inLanguage": "ru", "applicationCategory": "EducationalApplication", "operatingSystem": "iOS, Android, любой браузер",
           "isAccessibleForFree": True, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "RUB"},
-          "description": f"Офлайн-разговорник китайского для туристов: {n_phr} фраз, {len(SIGNS)} вывесок, {len(LESSONS)} уроков, {len(DIALOGS)} диалогов, справочник о жизни в Китае. Pinyin и произношение кириллицей.",
+          "description": f"Офлайн-разговорник китайского для туристов: {n_phr} фраз, {len(SIGNS)} вывесок, {len(LESSONS)} уроков, справочник о жизни в Китае. Pinyin и произношение кириллицей.",
           "codeRepository": "https://github.com/aleksandrkaiser/cn-trainer", "license": "https://opensource.org/licenses/MIT"}
 html = (tpl.replace("__DATA__", json.dumps(data, ensure_ascii=False))
            .replace("__JSONLD__", json.dumps(jsonld, ensure_ascii=False))

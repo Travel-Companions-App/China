@@ -11,10 +11,9 @@ for s in SYLLABLES: dup.setdefault(syl_cyr(s), []).append(s)
 coll = {k: v for k, v in dup.items() if len(v) > 1}
 print("слогов:", len(SYLLABLES), "| совпадений кириллицы:", coll or "нет"); ok &= not coll
 items = [p for v in PHRASES.values() for _, p, _ in v] + [p for _, p, _, _ in SIGNS] + [p for _, p, _ in NUMBERS] \
-        + [p for _, p, _ in BEIJING_STATIONS] + [c["py"] for c in SHOW_CARDS] + [HOTEL["addr_py"]] \
-        + [v[1] for v in TRIP_CARDS.values() if isinstance(v, tuple)]
+        + [p for _, p, _ in BEIJING_STATIONS] + [c["py"] for c in SHOW_CARDS] \
+        + [v[1] for v in PLACE_CARD.values() if isinstance(v, tuple)]
 from lessons import LESSONS
-from dialogs import DIALOGS
 from guide import GUIDE
 struct = []
 for l in LESSONS:
@@ -24,18 +23,10 @@ for l in LESSONS:
         items += [o[1] for o in x.get("opts", []) if isinstance(o, tuple)] + [t[1] for t in x.get("tiles", [])]
         if x["t"] in ("choice", "listen") and not 0 <= x["ok"] < len(x["opts"]): struct.append(f"урок {l['n']}: неверный ok")
         if x["t"] == "order" and len(x["tiles"]) < 2: struct.append(f"урок {l['n']}: мало блоков")
-for d in DIALOGS:
-    for s in d["steps"]:
-        if s["who"] == "them": items.append(s["py"]); continue
-        if not any(a["ok"] for a in s["opts"]): struct.append(f"диалог «{d['title']}»: нет верного ответа")
-        for a in s["opts"]:
-            items.append(a["py"])
-            if a["reply"]: items.append(a["reply"]["py"])
-    if d["steps"][-1]["who"] != "you": struct.append(f"диалог «{d['title']}» должен заканчиваться ходом пользователя")
 for g in GUIDE:
     items += [p for _, p, _ in g["phrases"]]
     if not g["sources"]: struct.append(f"справка «{g['title']}»: нет источника")
-print("уроков:", len(LESSONS), "| диалогов:", len(DIALOGS), "| статей:", len(GUIDE), "| ошибки структуры:", struct or "нет"); ok &= not struct
+print("уроков:", len(LESSONS), "| статей:", len(GUIDE), "| ошибки структуры:", struct or "нет"); ok &= not struct
 # латиница без тонов из заглавных (B口, WiFi) — не pinyin
 bad = {w for p in items for w in re.findall(r"[A-Za-zÀ-ɏüÜ']+", p) if word_cyr(w) is None and not re.fullmatch(r"[A-Z]+|WiFi", w)}
 print("pinyin без разбора на слоги:", bad or "нет"); ok &= not bad

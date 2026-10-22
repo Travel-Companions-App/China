@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """Сквозной тест тренажёра в headless Chromium (Playwright).
 
-Проходит главную, поиск, показ крупно, все уроки и диалоги, справку, карточки, тест,
-поездку, настройки; затем проверяет офлайн-перезагрузку и баннер обновления.
+Проходит главную (поиск, недавние, избранное, разделы), показ крупно, «Мои места» → такси,
+все уроки, справку, карточки, тест, настройки; затем проверяет офлайн-перезагрузку и баннер обновления.
 
     python3 src/e2e.py            # тест
     python3 src/e2e.py --shots    # + скриншоты для README в docs/screenshots/
@@ -48,31 +48,61 @@ with sync_playwright() as p:
     print("Главная")
     check(pg.locator(".hero h1").inner_text().startswith("你好"), "заголовок")
     check(pg.locator(".qk").count() == 3, "три быстрые кнопки")
-    check("поездки" in pg.locator("#hsub").inner_text() or "Пекин" in pg.locator("#hsub").inner_text(), "строка поездки: " + pg.locator("#hsub").inner_text())
-    shot("1-home")
+    n = pg.locator("#hbody .sec").count(); check(n >= 15, f"разделы на главной: {n}")
+    check(pg.locator("#tabs button").count() == 3, "вкладки: Главная / Показать / Ещё")
+    check("Фраза дня" not in pg.locator("#hbody").inner_text() and "Урок" not in pg.locator("#hbody").inner_text(), "на главной нет фразы дня и уроков")
 
     print("Поиск")
     for q, min_n in [("вода", 3), ("shui", 3), ("水", 3), ("туалет", 2), ("дзи-чанг", 1), ("Alipay", 2)]:
         pg.fill("#hq", q); n = pg.locator("#hres .ritem").count()
         check(n >= min_n, f"«{q}» → {n} фраз")
-    pg.fill("#hq", "такси"); check(pg.locator("#hres .rlink").count() >= 1, "«такси» находит статью/диалог")
+    pg.fill("#hq", "такси"); check(pg.locator("#hres .rlink").count() >= 1, "«такси» находит статью справки")
     pg.fill("#hq", "вода"); shot("2-search")
     pg.locator("#hres [data-fv]").first.click(); check(ev("Object.keys(favs).length") == 1, "звёздочка добавила в избранное")
     pg.locator("#hres .ritem").first.click(); check(pg.is_visible("#full"), "результат открывается крупно")
+    i0 = ev("fullS.i"); pg.keyboard.press("ArrowRight"); check(ev("fullS.i") == i0 + 1, "листание к следующему результату")
     pg.click("[data-f=close]"); pg.fill("#hq", ""); pg.dispatch_event("#hq", "input")
 
+    print("Главная: недавние, избранное, разделы")
+    check(pg.locator("#hbody h2", has_text="Недавние").count() == 1 and pg.locator("#hbody .hrow").count() >= 2, "недавние и избранное на главной")
+    pg.locator("#hbody .hrow").first.click(); check(pg.is_visible("#full"), "недавняя фраза открывается крупно"); pg.click("[data-f=close]")
+    pg.click("#hbody [data-sec='Фразы: Такси']")
+    check(ev("view") == "list" and pg.locator("#list .item").count() == ev("DATA.phrases['Такси'].length"), "раздел «Такси» открывается списком")
+    pg.click("#tabs [data-v=home]")
+
     print("Показ крупно")
-    pg.click("[data-sh=taxi]"); check("酒店" in pg.locator("#full .zh").inner_text(), "такси → карточка отеля")
+    pg.click("[data-sh=nochinese]"); check("中文" in pg.locator("#full .zh").inner_text(), "«Не говорю» → карточка")
     fz = ev("fullS.fz"); pg.click("[data-f=plus]"); check(ev("fullS.fz") > fz, "A+ увеличивает шрифт")
     pg.click("[data-f=rot]"); check("rot" in pg.get_attribute("#full", "class"), "поворот")
     pg.click("[data-f=rot]"); pg.click("[data-f=minus]")
-    i0 = ev("fullS.i"); pg.keyboard.press("ArrowRight"); check(ev("fullS.i") == i0 + 1, "листание к следующей карточке")
-    shot("3-show-full")
     pg.click("[data-f=close]"); check(not pg.is_visible("#full"), "закрытие")
     pg.click("#tabs [data-v=show]"); n = pg.locator("#shows .sc").count(); check(n >= 8, f"вкладка «Показать»: {n} карточек (7 + избранное)")
+    check("酒店" not in pg.locator("#shows").inner_text(), "в карточках нет конкретного отеля")
+
+    print("Мои места")
+    ev("store.set('trips', [{city: 'Тестоград', hotel: '测试酒店', addr: '测试路1号', phone: '+86 1', station: '上海虹桥站'}]); localStorage.removeItem('cn:places'); 0")
+    pg.click("#tabs [data-v=home]"); pg.click("[data-h=taxi]")
+    check(ev("view") == "places" and pg.locator("#v-places [data-p]").count() == 2, "«Такси» → «Мои места»; перенос из старой поездки: отель + вокзал")
+    pg.click("[data-a=add]"); pg.fill("#pf-name", "Ресторан"); pg.fill("#pf-zh", "好吃饭店"); pg.fill("#pf-addr", "人民路8号"); pg.click("[data-a=save]")
+    check(pg.locator("#v-places [data-p]").count() == 3 and "好吃饭店" in pg.locator("#v-places [data-p='0']").inner_text(), "место добавлено, новое — сверху")
+    shot("5-places")
+    pg.click("#v-places [data-p='0']"); t = pg.locator("#full .zh").inner_text()
+    check("请带我们去这里" in t and "好吃饭店" in t and "人民路8号" in t, "карточка для водителя: название и адрес")
+    shot("3-show-full")
+    pg.keyboard.press("ArrowRight"); check(ev("fullS.list.length") == 3 and ev("fullS.i") == 1, "листание между местами")
+    pg.click("[data-f=close]")
+    pg.click("#v-places [data-e='0']"); pg.fill("#pf-name", "Ресторан у дома"); pg.click("[data-a=save]")
+    check("Ресторан у дома" in pg.locator("#v-places").inner_text(), "место изменено")
+    ev("window.confirm = () => true; 0"); pg.click("#v-places [data-e='0']"); pg.click("[data-a=del]")
+    check(pg.locator("#v-places [data-p]").count() == 2, "место удалено")
+    pg.click("#tabs [data-v=show]"); t = pg.locator("#shows").inner_text()
+    check("测试酒店" in t and "上海虹桥站" in t, "места попадают в «Показать»")
+    pg.click("#tabs [data-v=home]"); pg.fill("#hq", "Тестоград"); check(pg.locator("#hres .ritem").count() >= 1, "места находятся поиском")
+    pg.fill("#hq", ""); pg.dispatch_event("#hq", "input")
+    pg.reload(); pg.wait_for_selector("#hq"); check(ev("places().length") == 2, "места сохраняются после перезапуска")
 
     print("Уроки")
-    pg.click("#tabs [data-v=les]")
+    pg.click("#tabs [data-v=more]"); pg.click("[data-go=les]")
     for n in range(1, ev("DATA.lessons.length") + 1):
         pg.click(f"[data-l='{n}']"); pg.click("[data-a=start]"); steps = 0
         while ev("lesState.mode") == "ex" and steps < 200:
@@ -86,18 +116,8 @@ with sync_playwright() as p:
         if n == 2: shot("4-lesson-done")
         pg.click("[data-a=list]")
 
-    print("Диалоги")
-    pg.click("#tabs [data-v=dlg]")
-    for i in range(ev("DATA.dialogs.length")):
-        pg.click(f"[data-d='{i}']"); steps = 0
-        while ev("dlg.step < dlg.d.steps.length") and steps < 60:
-            k = ev("dlg.d.steps[dlg.step].opts.findIndex(o => o.ok)"); pg.click(f"#turn [data-i='{k}']"); steps += 1
-        check(ev("dlg.errors") == 0 and pg.locator("#turn").inner_text().startswith("Сценарий пройден"), "диалог: " + ev("dlg.d.title"))
-        if i == 3: pg.evaluate("window.scrollTo(0, 0)"); shot("5-dialog")
-        pg.click("#turn [data-a=list]")
-
     print("Справка")
-    pg.click("#tabs [data-v=gd]")
+    pg.click("#tabs [data-v=more]"); pg.click("[data-go=gd]")
     for i in range(ev("DATA.guide.length")):
         pg.click(f"[data-g='{i}']"); check(pg.locator(".pts li").count() > 0 and pg.locator(".src a").count() > 0, "статья: " + ev(f"DATA.guide[{i}].title"))
         pg.click("[data-a=list]")
@@ -130,18 +150,8 @@ with sync_playwright() as p:
     pg.click("#hres [data-ask]"); check(ev("view") == "my" and pg.input_value("#my-ask") == "арахис", "из поиска — в «Спросить Claude» с запросом")
     shot("8-my-phrases")
     pg.click("#tabs [data-v=home]"); pg.fill("#hq", ""); pg.dispatch_event("#hq", "input")
+    shot("1-home")
 
-    print("Поездка")
-    pg.click("#tabs [data-v=more]"); pg.click("[data-go=trips]")
-    check(pg.locator("[data-t]").count() == 1, "пример города есть")
-    shot("6-trips")
-    pg.click("[data-a=add]")
-    pg.fill("#tf-city", "Тестоград"); pg.fill("#tf-from", ev("isoDay(today())")); pg.fill("#tf-hotel", "测试酒店"); pg.fill("#tf-addr", "测试路1号"); pg.fill("#tf-station", "上海虹桥站")
-    pg.click("[data-a=save]"); check(pg.locator("[data-t]").count() == 2, "город добавлен")
-    pg.click("#tabs [data-v=show]")
-    t = pg.locator("#shows").inner_text()
-    check("Тестоград" in t and "测试酒店" in t and "上海虹桥站" in t, "карточки такси → отель и вокзал из поездки")
-    ev("store.set('trips', trips().filter(s => s.city !== 'Тестоград'))")
 
     print("Настройки")
     pg.click("#tabs [data-v=more]"); pg.click("[data-go=set]")
@@ -154,7 +164,8 @@ with sync_playwright() as p:
     print("Офлайн")
     ctx.set_offline(True); pg.reload(); pg.wait_for_selector("#hq")
     check("офлайн" in pg.locator("#net").inner_text(), "индикатор «офлайн»")
-    pg.click("#tabs [data-v=les]"); check(pg.locator("[data-l]").count() == 8, "уроки офлайн")
+    pg.click("#tabs [data-v=more]"); pg.click("[data-go=les]"); check(pg.locator("[data-l]").count() == 8, "уроки офлайн")
+    pg.click("#tabs [data-v=home]"); pg.click("[data-h=taxi]"); check(pg.locator("#v-places [data-p]").count() == 2, "мои места офлайн")
     pg.click("#tabs [data-v=show]"); pg.locator("#shows .sc").first.click(); check(pg.is_visible("#full"), "показ офлайн")
     pg.click("[data-f=close]"); ctx.set_offline(False)
 

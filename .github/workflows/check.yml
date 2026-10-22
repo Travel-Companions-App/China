@@ -42,5 +42,5 @@ jobs:
           git diff --exit-code -- index.html sw.js manifest.webmanifest sitemap.xml \
             || (echo "::error::index.html/sw.js устарели — запустите sh src/build.sh и закоммитьте результат"; exit 1)
 
-      - name: Сквозной тест (уроки, диалоги, офлайн, обновление)
+      - name: Сквозной тест (главная, места, уроки, офлайн, обновление)
         run: python src/e2e.py

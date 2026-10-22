@@ -11,12 +11,12 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <title>Китайский для туриста — офлайн-разговорник и тренажёр</title>
-<meta name="description" content="Бесплатный офлайн-разговорник китайского для русскоязычных туристов: фразы с иероглифами, pinyin и произношением кириллицей, карточки «показать таксисту», уроки, диалоги, справочник о жизни в Китае. Работает без интернета на iPhone.">
+<meta name="description" content="Бесплатный офлайн-разговорник китайского для русскоязычных туристов: фразы с иероглифами, pinyin и произношением кириллицей, карточки «показать таксисту» со своими адресами, уроки, справочник о жизни в Китае. Работает без интернета на iPhone.">
 <link rel="canonical" href="__SITE__">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ru_RU">
 <meta property="og:title" content="Китайский для туриста — офлайн-разговорник">
-<meta property="og:description" content="Фразы с pinyin и кириллицей «как слышится», карточки для таксиста, уроки и диалоги. Работает офлайн, ставится на экран «Домой».">
+<meta property="og:description" content="Фразы с pinyin и кириллицей «как слышится», карточки для таксиста со своими адресами. Работает офлайн, ставится на экран «Домой».">
 <meta property="og:url" content="__SITE__">
 <meta property="og:image" content="__SITE__og.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -141,12 +141,6 @@ h2{font-size:13px;color:var(--acc);margin:20px 0 2px;text-transform:uppercase;le
 .tile{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:10px;padding:6px 10px;font:inherit;text-align:center}
 .tile b{display:block;font-size:22px}.tile small{color:var(--acc);font-size:12px}
 .ans{border:2px dashed var(--line);border-radius:12px;padding:6px;min-height:68px}
-.chat{display:flex;flex-direction:column;gap:8px;margin-top:8px}
-.bub{max-width:88%;border-radius:16px;padding:10px 12px;background:var(--card);border:1px solid var(--line)}
-.bub.me{align-self:flex-end;background:color-mix(in srgb,var(--ok) 14%,var(--card));border-color:color-mix(in srgb,var(--ok) 40%,var(--line))}
-.bub .zh{font-size:22px}
-.bub .note{font-size:13px;color:var(--muted);margin-top:2px}
-.bub .tap{font-size:13px;color:var(--muted)}
 .seg{display:flex;background:var(--soft);border-radius:10px;padding:3px;margin:4px 0 8px}
 .seg button{flex:1;border:0;background:none;border-radius:8px;padding:8px;font:inherit;font-size:14px;color:var(--fg)}
 .seg button.on{background:var(--card);font-weight:600}
@@ -157,11 +151,26 @@ h2{font-size:13px;color:var(--acc);margin:20px 0 2px;text-transform:uppercase;le
 .src{font-size:13px;color:var(--muted);margin-top:16px}
 .src a{color:var(--cy)}
 .more .li .n{font-size:24px}
+.hero h1{font-size:24px}
+.hrow{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
+.hrow .t{flex:1;min-width:0}
+.hrow .zh{font-size:22px;line-height:1.25}
+.hrow .m{font-size:14px}
+.hrow .zh,.hrow .m{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.hhead{display:flex;justify-content:space-between;align-items:baseline}
+.hhead button{border:0;background:none;color:var(--muted);font:inherit;font-size:13px;padding:4px 0}
+.secs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.sec{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:12px;padding:10px 6px;font:inherit;font-size:14px;text-align:center;line-height:1.2}
+.sec small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.pl{display:flex;align-items:stretch;gap:8px;margin-bottom:8px}
+.pl .li{margin:0;flex:1;min-width:0}
+.pl .ed{border:1px solid var(--line);background:var(--card);color:var(--muted);border-radius:14px;width:52px;font:inherit;font-size:18px;flex:none}
+.pl .zh2{font-size:19px;font-weight:700;overflow-wrap:anywhere}
 </style>
 </head>
 <body>
 <header><select id="deck"></select><div class="voice muted" id="vstat"></div></header>
-<noscript><p style="padding:16px">Офлайн-разговорник китайского для туриста: фразы с иероглифами, pinyin и произношением кириллицей, карточки для таксиста, уроки, диалоги и справочник. Для работы включите JavaScript. Исходники и описание: <a href="https://github.com/aleksandrkaiser/cn-trainer">github.com/aleksandrkaiser/cn-trainer</a>.</p></noscript>
+<noscript><p style="padding:16px">Офлайн-разговорник китайского для туриста: фразы с иероглифами, pinyin и произношением кириллицей, карточки для таксиста, уроки и справочник. Для работы включите JavaScript. Исходники и описание: <a href="https://github.com/aleksandrkaiser/cn-trainer">github.com/aleksandrkaiser/cn-trainer</a>.</p></noscript>
 <main>
   <section id="v-home" class="home"></section>
   <section id="v-show" class="hide">
@@ -188,18 +197,19 @@ h2{font-size:13px;color:var(--acc);margin:20px 0 2px;text-transform:uppercase;le
     <div id="list"></div>
   </section>
   <section id="v-les" class="hide"></section>
-  <section id="v-dlg" class="hide"></section>
   <section id="v-gd" class="hide"></section>
   <section id="v-more" class="hide more">
     <button class="li" data-go="list"><span class="n">🔎</span><span class="tt"><div>Фразы и вывески</div><div class="muted">Весь разговорник списком, по разделам</div></span></button>
+    <button class="li" data-go="places"><span class="n">📍</span><span class="tt"><div>Мои места</div><div class="muted">Адреса иероглифами → карточка для такси. Хранятся на этом iPhone</div></span></button>
     <button class="li" data-go="my"><span class="n">✍︎</span><span class="tt"><div>Мои фразы</div><div class="muted">Нет нужной фразы — спросите Claude и сохраните ответ офлайн</div></span></button>
     <button class="li" data-go="learn"><span class="n">🃏</span><span class="tt"><div>Карточки</div><div class="muted">Интервальное повторение: фразы, вывески, слова уроков</div></span></button>
     <button class="li" data-go="quiz"><span class="n">✅</span><span class="tt"><div>Тест</div><div class="muted">Выбрать перевод</div></span></button>
-    <button class="li" data-go="trips"><span class="n">🧳</span><span class="tt"><div>Поездка</div><div class="muted">Города, отели и вокзалы → карточки для такси</div></span></button>
+    <button class="li" data-go="gd"><span class="n">🧭</span><span class="tt"><div>Справка</div><div class="muted">Жизнь в Китае: оплата, такси, поезда, связь — с источниками</div></span></button>
+    <button class="li" data-go="les"><span class="n">📖</span><span class="tt"><div>Уроки</div><div class="muted">8 уроков: тоны, вопросы, числа, счётные слова</div></span></button>
     <button class="li" data-go="syl"><span class="n">ā</span><span class="tt"><div>Слоги</div><div class="muted">Как читать pinyin, все 406 слогов</div></span></button>
     <button class="li" data-go="set"><span class="n">⚙︎</span><span class="tt"><div>Настройки</div><div class="muted">Тема, резервная копия прогресса, версия</div></span></button>
   </section>
-  <section id="v-trips" class="hide"></section>
+  <section id="v-places" class="hide"></section>
   <section id="v-my" class="hide"></section>
   <section id="v-set" class="hide"></section>
   <section id="v-syl" class="hide">
@@ -213,9 +223,6 @@ h2{font-size:13px;color:var(--acc);margin:20px 0 2px;text-transform:uppercase;le
 <nav id="tabs">
   <button data-v="home" class="on"><b>你</b>Главная</button>
   <button data-v="show"><b>📋</b>Показать</button>
-  <button data-v="les"><b>📖</b>Уроки</button>
-  <button data-v="dlg"><b>💬</b>Диалоги</button>
-  <button data-v="gd"><b>🧭</b>Справка</button>
   <button data-v="more"><b>⋯</b>Ещё</button>
 </nav>
 <div id="full" class="hide"></div>
@@ -332,7 +339,7 @@ function say(text) {
 
 // ---- tabs
 let view = "home";
-const UNDER_MORE = ["learn", "quiz", "syl", "list", "trips", "set", "my"];
+const UNDER_MORE = ["learn", "quiz", "syl", "list", "places", "set", "my", "les", "gd"];
 function go(v, keep) {
   if (v === view && v === "home" && !keep) { homeQ = ""; }
   view = v;
@@ -344,28 +351,20 @@ function go(v, keep) {
   render(); window.scrollTo(0, 0);
 }
 $("tabs").onclick = e => { const b = e.target.closest("button"); if (b) go(b.dataset.v); };
-$("v-more").onclick = e => { const b = e.target.closest("[data-go]"); if (b) go(b.dataset.go); };
+$("v-more").onclick = e => { const b = e.target.closest("[data-go]"); if (!b) return; if (b.dataset.go === "list") { $("deck").value = "Все"; store.set("deck", "Все"); $("q").value = ""; } go(b.dataset.go); };
 
 // ---- show cards
-function taxiCard(s) {
-  const T = DATA.trip, base = DATA.show.find(c => c.id === "taxi");
-  return {id: "trip:taxi:" + s.id, title: "Такси → отель" + (s.city ? " · " + s.city : ""),
-    zh: [T.taxi[0], s.hotel, s.addr, s.phone ? T.phone + s.phone : ""].filter(Boolean),
-    py: T.taxi[1], cy: T.taxi[2], ru: base ? base.ru : ""};
-}
-function stationCard(s) {
-  const T = DATA.trip, st = DATA.stations.find(x => x[0] === s.station);
-  return {id: "trip:st:" + s.id, title: "Такси → вокзал" + (s.city ? " · " + s.city : ""),
-    zh: [T.station[0], s.station], py: T.station[1] + (st ? " · " + st[1] : ""), cy: T.station[2] + (st ? " · " + st[2] : ""),
-    ru: "Водитель, отвезите нас, пожалуйста, на этот вокзал" + (st ? ": " + st[3] : "") + "."};
+function placeCard(p) {
+  const T = DATA.place;
+  return {id: "place:" + p.id, title: "Такси → " + (p.name || "место"),
+    zh: [T.taxi[0], p.zh, p.addr, p.phone ? T.phone + p.phone : ""].filter(Boolean),
+    py: T.taxi[1], cy: T.taxi[2], ru: "Водитель, отвезите нас, пожалуйста, сюда: " + (p.name || "это место") + (p.note ? " (" + p.note + ")" : "") + "."};
 }
 function showCards() {
-  const s = curStop(), out = [];
+  const out = [];
   for (const c of DATA.show) {
-    if (c.id === "taxi") {
-      out.push(s && s.hotel ? taxiCard(s) : {...c, id: "show:" + c.id});
-      if (s && s.station) out.push(stationCard(s));
-    } else out.push({...c, id: "show:" + c.id});
+    if (c.id === "taxi") out.push(...places().map(placeCard));
+    out.push({...c, id: "show:" + c.id});
   }
   return out;
 }
@@ -387,12 +386,20 @@ async function lockScreen() {
 }
 function unlockScreen() { try { wakeLock && wakeLock.release(); } catch {} wakeLock = null; }
 document.addEventListener("visibilitychange", () => { if (fullS && document.visibilityState === "visible") lockScreen(); });
+// ---- недавние: снимки последних открытых фраз
+const recent = () => store.get("recent", []);
+function addRecent(c) {
+  const id = favId(c), r = recent().filter(x => x.id !== id);
+  r.unshift({id, zh: [].concat(c.lines || c.zh), py: c.py || "", cy: c.cy || "", ru: c.ru || "", deck: c.deck || c.title || ""});
+  store.set("recent", r.slice(0, 12));
+}
 function openFull(c, list, i) {
   list = list && list.length ? list : [c]; i = list && list.length ? (i || 0) : 0;
+  try { addRecent(list[i]); } catch {}
   fullS = {list, i, fz: store.get("fz", 1), rot: false};
   $("full").classList.remove("hide"); drawFull(); lockScreen();
 }
-function closeFull() { $("full").classList.add("hide"); $("full").classList.remove("rot"); fullS = null; unlockScreen(); try { speechSynthesis.cancel(); } catch {} if (view === "home" || view === "list" || view === "show") render(); }
+function closeFull() { $("full").classList.add("hide"); $("full").classList.remove("rot"); fullS = null; unlockScreen(); try { speechSynthesis.cancel(); } catch {} if (view === "home" || view === "list" || view === "show" || view === "places") render(); }
 function drawFull() {
   const S = fullS, c = S.list[S.i], lines = [].concat(c.lines || c.zh), F = $("full");
   F.style.setProperty("--fz", S.fz); F.classList.toggle("rot", S.rot);
@@ -698,73 +705,6 @@ function checkOrder() {
   say(full);
 }
 
-// ---- диалоги
-let dlg = null; // {d, step, log:[html], errors, mode}
-const dlgMode = () => store.get("dmode", "study");
-function lineHtml(s, me) {
-  const test = dlgMode() === "test" && !me;
-  const det = `<div class="py">${esc(s.py)}</div><div class="cy">${esc(s.cy)}</div><div>${esc(s.ru)}</div>${s.note ? `<div class="note">${esc(s.note)}</div>` : ""}`;
-  return `<div class="bub${me ? " me" : ""}"><div style="display:flex;gap:8px;align-items:flex-start"><div class="zh" style="flex:1">${esc(s.zh)}</div>${sayBtn(s.zh)}</div>` +
-    (test ? `<div class="det hide">${det}</div><div class="tap" data-a="rev">показать перевод</div>` : det) + `</div>`;
-}
-function drawDialogs() {
-  const box = $("v-dlg");
-  const segs = `<div class="seg"><button data-m="study" class="${dlgMode() === "study" ? "on" : ""}">Учебный: перевод виден</button><button data-m="test" class="${dlgMode() === "test" ? "on" : ""}">Проверка: на слух</button></div>`;
-  if (!dlg) {
-    const done = store.get("dlg", {});
-    box.innerHTML = `<p class="muted">Сценарии с выбором реплики. Собеседник говорит по-разному — учитесь узнавать ключевые слова.</p>` + segs +
-      DATA.dialogs.map((d, i) => `<button class="li" data-d="${i}"><span class="n">${i + 1}</span><span class="tt"><div>${esc(d.title)}</div><div class="muted">${esc(d.intro)}</div></span><span class="st">${done[i] != null ? "✓" + (done[i] ? " ош. " + done[i] : "") : ""}</span></button>`).join("");
-  } else {
-    const d = dlg.d;
-    box.innerHTML = `<button class="back" data-a="list">‹ Диалоги</button><div style="font-size:20px;font-weight:700">${esc(d.title)}</div><p class="muted">${esc(d.intro)}</p>` + segs +
-      `<div class="chat" id="chat">${dlg.log.join("")}</div><div id="turn"></div>`;
-    drawTurn();
-  }
-  box.onclick = e => {
-    const m = e.target.closest("[data-m]"); if (m) { store.set("dmode", m.dataset.m); if (dlg) { restartDlg(); } else drawDialogs(); return; }
-    const di = e.target.closest("[data-d]"); if (di) { dlg = {d: DATA.dialogs[+di.dataset.d], idx: +di.dataset.d}; restartDlg(); window.scrollTo(0, 0); return; }
-    const a = e.target.closest("[data-a]"); if (!a) return; const k = a.dataset.a;
-    if (k === "list") { dlg = null; drawDialogs(); window.scrollTo(0, 0); }
-    if (k === "rev") { a.previousElementSibling.classList.remove("hide"); a.remove(); }
-    if (k === "again") { restartDlg(); window.scrollTo(0, 0); }
-    if (k === "pick") pickDlg(+a.dataset.i, a);
-  };
-}
-function restartDlg() { Object.assign(dlg, {step: 0, log: [], errors: 0}); advanceDlg(); drawDialogs(); }
-function advanceDlg() {
-  // выводим реплики собеседника до следующего хода пользователя
-  const st = dlg.d.steps; let last = null;
-  while (dlg.step < st.length && st[dlg.step].who === "them") { dlg.log.push(lineHtml(st[dlg.step])); last = st[dlg.step]; dlg.step++; }
-  if (last) setTimeout(() => say(last.zh), 200);
-}
-function drawTurn() {
-  const st = dlg.d.steps, t = $("turn");
-  if (dlg.step >= st.length) {
-    const done = store.get("dlg", {}); done[dlg.idx] = dlg.errors; store.set("dlg", done);
-    t.innerHTML = `<div class="why" style="margin-top:14px"><b>Сценарий пройден</b>${dlg.errors ? ", ошибок: " + dlg.errors : " без ошибок"}.</div><div class="row"><button class="btn" data-a="again">Ещё раз</button><button class="btn yes" data-a="list">К списку</button></div>`;
-    return;
-  }
-  const y = st[dlg.step], test = dlgMode() === "test";
-  t.innerHTML = `<div class="qq" style="margin-top:14px"><b>Ваш ход:</b> ${esc(y.prompt)}</div><div class="opts">` +
-    y.opts.map((o, i) => `<button class="opt" data-a="pick" data-i="${i}"><span class="ozh">${esc(o.zh)}</span><small>${esc(o.py)}</small>${test ? "" : `<div class="muted">${esc(o.ru)}</div>`}</button>`).join("") + `</div><div id="dfb"></div>`;
-}
-function pickDlg(i, btn) {
-  const y = dlg.d.steps[dlg.step], o = y.opts[i];
-  if (!o.ok) {
-    dlg.errors++; btn.classList.add("bad");
-    $("dfb").innerHTML = `<div class="why">${esc(o.ru)} — ${esc(o.why || "не подходит здесь")}</div>`;
-    return;
-  }
-  dlg.log.push(lineHtml(o, true));
-  if (o.why) dlg.log.push(`<div class="muted" style="font-size:13px">${esc(o.why)}</div>`);
-  say(o.zh);
-  dlg.step++;
-  if (o.reply) { dlg.log.push(lineHtml(o.reply)); setTimeout(() => say(o.reply.zh), 1400); }
-  const before = dlg.log.length; advanceDlg();
-  drawDialogs();
-  const c = $("chat"); if (c && c.lastElementChild) c.lastElementChild.scrollIntoView({behavior: "smooth", block: "center"});
-}
-
 // ---- справочник
 let gdOpen = null;
 function drawGuide() {
@@ -790,65 +730,59 @@ function drawGuide() {
   };
 }
 
-// ---- поездка: города, отели, вокзалы (хранится только на устройстве)
-function trips() {
-  let t = store.get("trips", null);
-  if (!t) {
-    const h = DATA.hotel;
-    t = [{id: "t1", city: "Пекин", from: "", to: "", hotel: h.name_zh, addr: h.addr_zh, phone: h.phone, station: "", note: h.metro_zh, example: true}];
-    store.set("trips", t);
+// ---- мои места: адреса иероглифами (хранятся только на устройстве) → карточка «Такси → место»
+function places() {
+  let p = store.get("places", null);
+  if (!p) {  // перенос из старой «Поездки»: отели и вокзалы городов
+    p = [];
+    for (const s of store.get("trips", [])) {
+      const city = s.city ? " · " + s.city : "";
+      if (s.hotel || s.addr) p.push({id: "p" + p.length + Date.now(), name: "Отель" + city, zh: s.hotel || "", addr: s.addr || "", phone: s.phone || "", note: s.note || "", t: 0});
+      if (s.station) p.push({id: "p" + p.length + Date.now(), name: "Вокзал" + city, zh: s.station, addr: "", phone: "", note: "", t: 0});
+    }
+    store.set("places", p);
   }
-  return t;
+  return p.slice().sort((a, b) => (b.t || 0) - (a.t || 0));
 }
-const byFrom = (a, b) => (a.from || "9") < (b.from || "9") ? -1 : 1;
-function curStop() {
-  const all = trips().slice().sort(byFrom); if (!all.length) return null;
-  const t = isoDay(today()); let c = null;
-  for (const s of all) if (s.from && s.from <= t) c = s;
-  return c || all[0];
-}
-function tripLine() {
-  const all = trips().filter(s => s.from).sort(byFrom), s = curStop();
-  if (!all.length) return s && s.city ? s.city : "Разговорник в дорогу";
-  const d = Math.round((today() - parseDay(all[0].from)) / DAY);
-  const last = all[all.length - 1], end = parseDay(last.to);
-  if (end && today() > end) return "Поездка завершена";
-  return (d < 0 ? `До поездки ${-d} дн.` : `День ${d + 1} поездки`) + (s && s.city ? " · " + s.city : "");
-}
-let tripEdit = null;
-function drawTrips() {
-  const box = $("v-trips"), all = trips().slice().sort(byFrom), c = curStop();
-  if (tripEdit) {
-    const s = tripEdit;
-    box.innerHTML = `<button class="back" data-a="cancel">‹ Поездка</button><div class="form">
-      <label>Город (по-русски)</label><input id="tf-city" value="${esc(s.city || "")}" placeholder="Шанхай">
-      <div class="two"><div><label>Заезд</label><input type="date" id="tf-from" value="${esc(s.from || "")}"></div><div><label>Выезд</label><input type="date" id="tf-to" value="${esc(s.to || "")}"></div></div>
-      <label>Отель — название иероглифами</label><input id="tf-hotel" lang="zh" value="${esc(s.hotel || "")}">
-      <label>Адрес отеля иероглифами</label><textarea id="tf-addr" lang="zh" rows="2">${esc(s.addr || "")}</textarea>
-      <label>Телефон отеля</label><input id="tf-phone" type="tel" value="${esc(s.phone || "")}" placeholder="+86 …">
-      <label>Вокзал отправления в следующий город (иероглифами)</label><input id="tf-station" lang="zh" list="stlist" value="${esc(s.station || "")}">
+let placeEdit = null;
+function drawPlaces() {
+  const box = $("v-places"), all = places();
+  if (placeEdit) {
+    const s = placeEdit;
+    box.innerHTML = `<button class="back" data-a="cancel">‹ Мои места</button><div class="form">
+      <label>Название по-русски (для себя)</label><input id="pf-name" value="${esc(s.name || "")}" placeholder="Отель в Шанхае">
+      <label>Название иероглифами</label><input id="pf-zh" lang="zh" list="stlist" value="${esc(s.zh || "")}" placeholder="上海…酒店">
       <datalist id="stlist">${DATA.stations.map(x => `<option value="${esc(x[0])}">${esc(x[3])}</option>`).join("")}</datalist>
-      <label>Заметка (метро рядом, ориентир)</label><input id="tf-note" value="${esc(s.note || "")}"></div>
-      <p class="muted">Название и адрес иероглифами возьмите из подтверждения брони или попросите на ресепшн написать адрес. Из этих полей соберутся карточки «Такси → отель» и «Такси → вокзал» во вкладке «Показать».</p>
+      <label>Адрес иероглифами</label><textarea id="pf-addr" lang="zh" rows="3">${esc(s.addr || "")}</textarea>
+      <label>Телефон</label><input id="pf-phone" type="tel" value="${esc(s.phone || "")}" placeholder="+86 …">
+      <label>Заметка (метро рядом, ориентир)</label><input id="pf-note" value="${esc(s.note || "")}"></div>
+      <p class="muted">Название и адрес иероглифами скопируйте из подтверждения брони или карты, либо попросите на ресепшн написать. Вокзалы Пекина и Шанхая можно выбрать подсказкой в поле названия.</p>
       <div class="row"><button class="btn yes" data-a="save">Сохранить</button></div>
-      ${s.id ? `<div class="row"><button class="btn" data-a="del">Удалить город</button></div>` : ""}`;
+      ${s.id ? `<div class="row"><button class="btn" data-a="del">Удалить место</button></div>` : ""}`;
   } else {
-    box.innerHTML = `<p class="muted">Города поездки с отелем и вокзалом. Текущий город выбирается по дате заезда; его отель и вокзал попадают в карточки для такси. Данные хранятся только на этом устройстве.</p>` +
-      all.map(s => `<button class="li" data-t="${esc(s.id)}"><span class="n">🏨</span><span class="tt"><div>${esc(s.city || "Без названия")}${s === c ? `<span class="cur">сейчас</span>` : ""}</div><div class="muted">${esc([s.from, s.to].filter(Boolean).join(" → ") || "даты не указаны")}</div><div class="muted" lang="zh">${esc(s.hotel || "отель не указан")}</div>${s.example ? `<div class="muted">Пример — отредактируйте под свою поездку</div>` : ""}</span><span class="st">›</span></button>`).join("") +
-      `<button class="btn yes big" data-a="add">+ Добавить город</button>`;
+    box.innerHTML = `<h2 style="margin-top:4px">Мои места</h2><p class="muted">Куда едем? Нажмите место — откроется карточка для водителя. Адреса хранятся только на этом iPhone.</p>` +
+      all.map((p, i) => `<div class="pl"><button class="li" data-p="${i}"><span class="n">📍</span><span class="tt"><div>${esc(p.name || "Без названия")}</div><div class="zh2" lang="zh">${esc(p.zh || "")}</div><div class="muted" lang="zh">${esc(p.addr || "")}</div></span></button><button class="ed" data-e="${i}" aria-label="Изменить">✎</button></div>`).join("") +
+      (all.length ? "" : `<p class="muted">Пока пусто — добавьте отель, вокзал или любое место.</p>`) +
+      `<button class="btn yes big" data-a="add">+ Добавить место</button><button class="btn big" data-a="generic">Карточка без адреса: «отвезите по этому адресу»</button>`;
   }
   box.onclick = e => {
-    const t = e.target.closest("[data-t]"); if (t) { tripEdit = {...trips().find(s => s.id === t.dataset.t)}; drawTrips(); window.scrollTo(0, 0); return; }
+    const pi = e.target.closest("[data-p]");
+    if (pi) { const p = all[+pi.dataset.p], list = store.get("places", []), x = list.find(q => q.id === p.id); if (x) { x.t = Date.now(); store.set("places", list); }
+      const cs = all.map(placeCard); return openFull(cs[+pi.dataset.p], cs, +pi.dataset.p); }
+    const pe = e.target.closest("[data-e]"); if (pe) { placeEdit = {...all[+pe.dataset.e]}; drawPlaces(); window.scrollTo(0, 0); return; }
     const a = e.target.closest("[data-a]"); if (!a) return; const k = a.dataset.a;
-    if (k === "add") { const prev = all[all.length - 1]; tripEdit = {from: prev && prev.to ? prev.to : ""}; }
-    if (k === "cancel") tripEdit = null;
+    if (k === "generic") { const c = {...DATA.show.find(x => x.id === "taxi"), id: "show:taxi"}; return openFull(c, [c], 0); }
+    if (k === "add") placeEdit = {};
+    if (k === "cancel") placeEdit = null;
     if (k === "save") {
-      const v = id => $("tf-" + id).value.trim();
-      const s = {id: tripEdit.id || "t" + Date.now(), city: v("city"), from: v("from"), to: v("to"), hotel: v("hotel"), addr: v("addr"), phone: v("phone"), station: v("station"), note: v("note")};
-      const list = trips().filter(x => x.id !== s.id); list.push(s); store.set("trips", list); tripEdit = null;
+      const v = id => $("pf-" + id).value.trim();
+      const p = {id: placeEdit.id || "p" + Date.now(), name: v("name"), zh: v("zh"), addr: v("addr"), phone: v("phone"), note: v("note"), t: placeEdit.t || Date.now()};
+      if (!p.zh && !p.addr) { alert("Нужно название или адрес иероглифами — их покажете водителю."); return; }
+      if (!p.name) { const st = DATA.stations.find(x => x[0] === p.zh); p.name = st ? st[3] : p.zh || "Место"; }
+      const list = store.get("places", []).filter(x => x.id !== p.id); list.push(p); store.set("places", list); placeEdit = null;
     }
-    if (k === "del" && confirm("Удалить этот город?")) { store.set("trips", trips().filter(x => x.id !== tripEdit.id)); tripEdit = null; }
-    drawTrips(); window.scrollTo(0, 0);
+    if (k === "del" && confirm("Удалить это место?")) { store.set("places", store.get("places", []).filter(x => x.id !== placeEdit.id)); placeEdit = null; }
+    drawPlaces(); window.scrollTo(0, 0);
   };
 }
 
@@ -936,7 +870,6 @@ function searchAll(raw) {
     ph: ph.slice(0, 60), more: Math.max(0, ph.length - 60),
     gd: DATA.guide.map((g, i) => ({g, i})).filter(x => hit(x.g.title, ...x.g.points)),
     les: DATA.lessons.filter(l => hit(l.title, l.goal)),
-    dlg: DATA.dialogs.map((d, i) => ({d, i})).filter(x => hit(x.d.title, x.d.intro)),
   };
 }
 let homeRes = [];
@@ -949,60 +882,54 @@ function drawHomeRes() {
   }
   if (r.gd.length) h += `<h2>Справка</h2>` + r.gd.map(x => `<button class="rlink" data-go-gd="${x.i}">${esc(x.g.title)}</button>`).join("");
   if (r.les.length) h += `<h2>Уроки</h2>` + r.les.map(l => `<button class="rlink" data-go-les="${l.n}">Урок ${l.n}. ${esc(l.title)}<small>${esc(l.goal)}</small></button>`).join("");
-  if (r.dlg.length) h += `<h2>Диалоги</h2>` + r.dlg.map(x => `<button class="rlink" data-go-dlg="${x.i}">${esc(x.d.title)}<small>${esc(x.d.intro)}</small></button>`).join("");
   if (!h) h = `<p class="muted" style="margin-top:14px">Ничего не найдено. Ищите по-русски, pinyin (можно без тонов), кириллицей или иероглифами.</p>`;
   h += `<button class="blk" data-ask="1" style="margin-top:14px"><div class="lbl">Нет нужной фразы?</div><div class="big2">Спросить Claude: «${esc(homeQ.trim())}»</div><div class="muted">Ответ сохраните в «Мои фразы» — будет работать офлайн</div></button>`;
   $("hres").innerHTML = h;
 }
 function openLesson(n) { lesState = {l: DATA.lessons[n - 1], mode: "theory"}; go("les"); }
-function openDialog(i) { dlg = {d: DATA.dialogs[i], idx: i, step: 0, log: [], errors: 0}; advanceDlg(); go("dlg"); }
-function dayPhrase() {
-  const pool = ALL.filter(c => c.deck.startsWith("Фразы") && !/слышите|спросят/.test(c.ru));
-  return pool[Math.floor(today() / DAY) % pool.length];
+let homeRows = [];
+const rowHtml = (c, i) => `<div class="hrow" data-hr="${i}"><div class="t"><div class="zh">${esc([].concat(c.lines || c.zh).join(""))}</div><div class="m"><span class="py">${esc(c.py || "")}</span> · <span class="cy">${esc(c.cy || "")}</span></div><div class="m">${esc(c.ru || "")}</div></div><button class="say" data-z="${esc([].concat(c.lines || c.zh).join(""))}">🔊</button></div>`;
+function homeSections() {
+  const out = Object.entries(DATA.phrases).map(([k, v]) => ({deck: "Фразы: " + k, name: k, n: v.length}));
+  out.push({deck: "Все вывески", name: "Вывески", n: DATA.signs.length}, {deck: "Вокзалы", name: "Вокзалы", n: DATA.stations.length});
+  const my = ALL.filter(c => c.deck === MY).length; if (my) out.push({deck: MY, name: MY, n: my});
+  return out;
 }
 function drawHome() {
   const box = $("v-home");
   if (!$("hq")) {
-    box.innerHTML = `<div class="hero"><h1><span>你好</span> · Китайский</h1><span class="net" id="net"><i></i></span></div><div class="sub" id="hsub"></div>
-      <input type="search" id="hq" placeholder="Найти: «вода», «shui», «туалет», 水…" autocomplete="off" enterkeyhint="search">
+    box.innerHTML = `<div class="hero"><h1><span>你好</span> · Китайский</h1><span class="net" id="net"><i></i></span></div>
+      <input type="search" id="hq" placeholder="Найти: «вода», «shui», «туалет», 水…" autocomplete="off" enterkeyhint="search" style="margin-top:10px">
       <div id="hres" class="res"></div><div id="hbody"></div>`;
     $("hq").oninput = () => { homeQ = $("hq").value; drawHome(); };
     box.onclick = e => {
+      if (e.target.closest(".say")) return;
       const f = e.target.closest("[data-fv]"); if (f) { const on = toggleFav(homeRes[+f.dataset.fv]); f.classList.toggle("on", on); f.textContent = on ? "★" : "☆"; return; }
       const ri = e.target.closest("[data-ri]"); if (ri) return openFull(homeRes[+ri.dataset.ri], homeRes, +ri.dataset.ri);
+      const hr = e.target.closest("[data-hr]"); if (hr) { const [list, i] = homeRows[+hr.dataset.hr]; return openFull(list[i], list, i); }
       const g = e.target.closest("[data-go-gd]"); if (g) { gdOpen = +g.dataset.goGd; return go("gd"); }
       const l = e.target.closest("[data-go-les]"); if (l) return openLesson(+l.dataset.goLes);
-      const d = e.target.closest("[data-go-dlg]"); if (d) return openDialog(+d.dataset.goDlg);
-      const sh = e.target.closest("[data-sh]"); if (sh) { const list = showCards(); const i = list.findIndex(c => c.id.endsWith(sh.dataset.sh) || c.id.startsWith("trip:" + sh.dataset.sh)); return openFull(list[Math.max(0, i)], list, Math.max(0, i)); }
+      const sc = e.target.closest("[data-sec]"); if (sc) { $("deck").value = sc.dataset.sec; store.set("deck", sc.dataset.sec); $("q").value = ""; return go("list"); }
+      const sh = e.target.closest("[data-sh]"); if (sh) { const c = {...DATA.show.find(x => x.id === sh.dataset.sh)}; c.id = "show:" + c.id; return openFull(c, [c], 0); }
       if (e.target.closest("[data-ask]")) { myAsk = homeQ.trim(); myParsed = null; return go("my"); }
       const a = e.target.closest("[data-h]"); if (!a) return; const k = a.dataset.h;
-      if (k === "srs") { $("deck").value = "Все"; store.set("deck", "Все"); cur = null; go("learn"); }
-      if (k === "fav") { $("deck").value = "★ Избранное"; store.set("deck", "★ Избранное"); go("list"); }
-      if (k === "trip") go("trips");
-      if (k === "show") go("show");
-      if (k === "pday") { const c = dayPhrase(); openFull(c, [c], 0); }
-      if (k === "say") say(dayPhrase().zh);
-      if (k.startsWith("les")) openLesson(+k.slice(3));
+      if (k === "taxi") { placeEdit = null; go("places"); }
+      if (k === "clr") { store.set("recent", []); drawHome(); }
     };
   }
   if ($("hq").value !== homeQ) $("hq").value = homeQ;
   const on = navigator.onLine; $("net").className = "net" + (on ? " on" : ""); $("net").innerHTML = `<i></i>${on ? "онлайн" : "офлайн"}`;
-  $("hsub").textContent = tripLine();
   const searching = homeQ.trim().length > 0;
   $("hres").classList.toggle("hide", !searching); $("hbody").classList.toggle("hide", searching);
   if (searching) return drawHomeRes();
-  const pool = [...ALL, ...favCards().filter(f => !ALL.some(c => c.id === f.id))];
-  const due = pool.filter(isDue).length, fresh = pool.filter(isNew).length;
-  const best = lesBest(), next = DATA.lessons.find(l => best[l.n] == null);
-  const p = dayPhrase(), fv = favCards(), s = curStop();
-  let h = `<div class="quick"><button class="qk main" data-sh="taxi"><b>🚕</b>Такси${s && s.hotel ? " в отель" : ""}</button><button class="qk" data-sh="nochinese"><b>🗣</b>Не говорю</button><button class="qk" data-sh="help"><b>🆘</b>Помощь</button></div>`;
-  h += `<button class="blk" data-h="srs"><div class="lbl">Карточки</div><div class="big2">${due ? `Повторить ${due}` : fresh ? "Учить новые" : "Всё повторено"}</div><div class="muted">${due ? "карточек ждут повторения сегодня · " : ""}новых ${fresh} из ${pool.length}</div></button>`;
-  h += next ? `<button class="blk" data-h="les${next.n}"><div class="lbl">Урок ${next.n} из ${DATA.lessons.length}</div><div class="big2">${esc(next.title)}</div><div class="muted">~${next.min} мин · ${next.ex.length} упражнений</div></button>`
-            : `<button class="blk" data-h="les1"><div class="lbl">Уроки</div><div class="big2">Все 8 уроков пройдены</div><div class="muted">Повторите любой — ошибки можно прорешать отдельно</div></button>`;
-  h += `<div class="blk" data-h="pday"><div class="lbl">Фраза дня</div><div style="display:flex;gap:10px;align-items:center"><div style="flex:1"><div class="zh">${esc(p.zh)}</div><div><span class="py">${esc(p.py)}</span> · <span class="cy">${esc(p.cy)}</span></div><div>${esc(p.ru)}</div></div><button class="say" data-h="say">🔊</button></div></div>`;
-  if (fv.length) h += `<button class="blk" data-h="fav"><div class="lbl">Избранное · ${fv.length}</div><div class="zh" style="font-size:20px">${fv.slice(0, 6).map(f => esc(f.zh)).join(" · ")}</div></button>`;
-  h += `<button class="blk" data-h="trip"><div class="lbl">Поездка</div><div class="big2">${esc(s ? (s.city || "Город") : "Добавить город")}</div><div class="muted" lang="zh">${esc(s && s.hotel ? s.hotel : "Отель и вокзал → карточки для такси")}</div></button>`;
-  h += `<p class="muted" style="text-align:center;font-size:12px">Работает без интернета · версия ${esc(DATA.built)}</p>`;
+  homeRows = [];
+  const rows = list => list.map((c, i) => { homeRows.push([list, i]); return rowHtml(c, homeRows.length - 1); }).join("");
+  const rc = recent(), fv = favCards();
+  let h = `<div class="quick"><button class="qk main" data-h="taxi"><b>🚕</b>Такси</button><button class="qk" data-sh="nochinese"><b>🗣</b>Не говорю</button><button class="qk" data-sh="help"><b>🆘</b>Помощь</button></div>`;
+  if (rc.length) h += `<div class="hhead"><h2>Недавние</h2><button data-h="clr">очистить</button></div>` + rows(rc);
+  if (fv.length) h += `<h2>★ Избранное</h2>` + rows(fv);
+  h += `<h2>Разделы</h2><div class="secs">` + homeSections().map(x => `<button class="sec" data-sec="${esc(x.deck)}">${esc(x.name)}<small>${x.n}</small></button>`).join("") + `</div>`;
+  h += `<p class="muted" style="text-align:center;font-size:12px;margin-top:18px">Работает без интернета · версия ${esc(DATA.built)}</p>`;
   $("hbody").innerHTML = h;
 }
 window.addEventListener("online", () => view === "home" && drawHome());
@@ -1040,7 +967,7 @@ function drawSettings() {
   const t = store.get("theme", "auto"), seg = (v, l) => `<button data-th="${v}" class="${t === v ? "on" : ""}">${l}</button>`;
   const used = Object.keys(localStorage).filter(k => k.startsWith("cn:")).reduce((n, k) => n + localStorage.getItem(k).length, 0);
   $("v-set").innerHTML = `<h2 style="margin-top:4px">Тема</h2><div class="seg">${seg("auto", "Как в системе")}${seg("light", "Светлая")}${seg("dark", "Тёмная")}</div>
-    <h2>Резервная копия</h2><p class="muted">Прогресс, избранное и поездка хранятся только на этом iPhone (${Math.ceil(used / 1024)} КБ). Сохраните копию в «Файлы» перед переустановкой или сменой телефона.</p>
+    <h2>Резервная копия</h2><p class="muted">Прогресс, избранное, мои места и мои фразы хранятся только на этом iPhone (${Math.ceil(used / 1024)} КБ). Сохраните копию в «Файлы» перед переустановкой или сменой телефона.</p>
     <div class="row"><button class="btn" data-s="exp">Сохранить копию</button><button class="btn" data-s="imp">Восстановить</button></div><input type="file" id="impf" accept="application/json,.json" class="hide">
     <h2>Обновление</h2><p class="muted">Версия ${esc(DATA.built)} (${esc(DATA.ver)}). При интернете новая версия скачивается сама — появится кнопка «Обновить».</p>
     <div class="row"><button class="btn" data-s="upd">Проверить сейчас</button></div><div class="muted" id="updst"></div>
@@ -1052,8 +979,8 @@ function drawSettings() {
     if (k === "exp") exportData();
     if (k === "imp") $("impf").click();
     if (k === "upd") { $("updst").textContent = navigator.onLine ? "Проверяю…" : "Нет интернета."; if (swReg && navigator.onLine) swReg.update().then(() => { setTimeout(() => { if ($("updst")) $("updst").textContent = $("upd").classList.contains("hide") ? "Установлена последняя версия." : "Есть новая версия — нажмите «Обновить» внизу."; }, 2500); }).catch(() => { $("updst").textContent = "Не удалось проверить."; }); }
-    if (k === "reset" && confirm("Сбросить прогресс уроков, диалогов, карточек и избранное? Поездка сохранится.")) {
-      for (const key of ["srs", "known", "les", "dlg", "favs"]) localStorage.removeItem("cn:" + key);
+    if (k === "reset" && confirm("Сбросить прогресс уроков и карточек, избранное и недавние? Мои места и мои фразы сохранятся.")) {
+      for (const key of ["srs", "known", "les", "dlg", "favs", "recent"]) localStorage.removeItem("cn:" + key);
       location.reload();
     }
   };
@@ -1063,12 +990,11 @@ function drawSettings() {
 $("deck").onchange = () => { store.set("deck", $("deck").value); cur = null; again = []; render(); };
 function render() {
   if (view === "home") drawHome();
-  if (view === "trips") drawTrips();
+  if (view === "places") drawPlaces();
   if (view === "my") drawMy();
   if (view === "set") drawSettings();
   if (view === "show") drawShows();
   if (view === "les") drawLessons();
-  if (view === "dlg") drawDialogs();
   if (view === "gd") drawGuide();
   if (view === "learn") { if (!cur || !cards().includes(cur)) nextCard(); else drawCard(); }
   if (view === "quiz") newQ();
