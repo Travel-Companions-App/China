@@ -125,6 +125,8 @@ with sync_playwright() as p:
     print("Ещё")
     pg.click("#tabs [data-v=more]"); pg.click("[data-go=learn]")
     check(ev("cur !== null"), "карточка показана")
+    check(pg.locator("#fc .zh").count() == 1 and pg.locator("#fc .py").inner_text() == ev("cur.py"), "на лицевой стороне иероглифы и pinyin")
+    pg.click("#pyf"); check(pg.locator("#fc .py").count() == 0, "pinyin можно спрятать до переворота"); pg.click("#pyf")
     for ok in [True, True, False, True]:
         pg.click("#fc"); pg.click("#bYes" if ok else "#bNo")
     check(ev("Object.keys(srs).length") >= 3, f"интервальное повторение записано: {ev('Object.keys(srs).length')}")

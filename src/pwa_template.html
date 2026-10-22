@@ -180,7 +180,7 @@ h2{font-size:13px;color:var(--acc);margin:20px 0 2px;text-transform:uppercase;le
   <section id="v-learn" class="hide">
     <div class="srsrow" id="lstat"></div>
     <div class="bar"><i id="lbar"></i></div>
-    <label class="muted"><input type="checkbox" id="rev"> Наоборот: русский → китайский</label>
+    <label class="muted"><input type="checkbox" id="rev"> Наоборот: русский → китайский</label><br><label class="muted"><input type="checkbox" id="pyf"> Pinyin сразу (вместе с иероглифами)</label>
     <div class="fc" id="fc" style="margin-top:10px"></div>
     <div class="row"><button class="btn no" id="bNo">Не знаю</button><button class="btn" id="bSay">🔊</button><button class="btn yes" id="bYes">Знаю</button></div>
     <p class="muted" style="text-align:center;margin:8px 0 0">Свайп вправо — знаю, влево — не знаю. Знакомые карточки вернутся через 1, 3, 7, 16, 35 дней.</p>
@@ -454,9 +454,10 @@ function drawCard() {
   $("lbar").style.width = (cs.length ? 100 * k / cs.length : 0) + "%";
   if (!cur) { $("fc").innerHTML = `<div class="muted">${cs.length ? "" : "Колода пуста — добавьте фразы в избранное звёздочкой ☆"}</div>`; return; }
   const rev = $("rev").checked;
-  const front = rev ? `<div class="ru" style="font-size:24px">${esc(cur.ru)}</div>` : `<div class="zh">${esc(cur.zh)}</div>`;
+  const pyf = $("pyf").checked;
+  const front = rev ? `<div class="ru" style="font-size:24px">${esc(cur.ru)}</div>` : `<div class="zh">${esc(cur.zh)}</div>` + (pyf ? `<div class="py">${esc(cur.py)}</div>` : "");
   const back = rev ? `<div class="zh">${esc(cur.zh)}</div><div class="py">${esc(cur.py)}</div><div class="cy">${esc(cur.cy)}</div>`
-                   : `<div class="py">${esc(cur.py)}</div><div class="cy">${esc(cur.cy)}</div><div class="ru">${esc(cur.ru)}</div>`;
+                   : (pyf ? "" : `<div class="py">${esc(cur.py)}</div>`) + `<div class="cy">${esc(cur.cy)}</div><div class="ru">${esc(cur.ru)}</div>`;
   $("fc").innerHTML = front + (flipped ? back : `<div class="hint muted">нажмите — перевернуть</div>`) + `<div class="hint muted">${esc(cur.deck)}</div>`;
 }
 $("fc").onclick = () => { flipped = !flipped; drawCard(); if (flipped) say(cur.zh); };
@@ -472,6 +473,8 @@ $("bNo").onclick = () => mark(false);
 $("bSay").onclick = () => cur && say(cur.zh);
 $("bReset").onclick = () => { if (!confirm("Сбросить прогресс этой колоды?")) return; cards().forEach(c => delete srs[c.id]); store.set("srs", srs); again = []; nextCard(); };
 $("rev").onchange = drawCard;
+$("pyf").checked = store.get("pyf", true);
+$("pyf").onchange = () => { store.set("pyf", $("pyf").checked); drawCard(); };
 onSwipe($("fc"), d => mark(d > 0));
 
 // ---- quiz
