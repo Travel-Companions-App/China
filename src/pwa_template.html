@@ -231,12 +231,6 @@ button{-webkit-user-select:none;user-select:none}
     <div class="row"><button class="btn" id="bHidden" style="font-size:14px"></button></div>
     <div id="lhid"></div>
   </section>
-  <section id="v-quiz" class="hide">
-    <div class="muted" id="qstat"></div>
-    <div class="fc" id="qcard" style="min-height:26vh;margin-top:8px"></div>
-    <div class="opts" id="qopts"></div>
-    <div class="row"><button class="btn" id="qNext">Дальше</button></div>
-  </section>
   <section id="v-dict" class="hide"></section>
   <section id="v-list" class="hide">
     <div class="lhead"><button class="back" id="lback">‹ Словарь</button><span class="muted" id="lcount"></span></div>
@@ -251,7 +245,6 @@ button{-webkit-user-select:none;user-select:none}
     <button class="li" data-go="places"><span class="n">📍</span><span class="tt"><div>Мои места</div><div class="muted">Адреса иероглифами → карточка для такси. Хранятся на этом iPhone</div></span></button>
     <button class="li" data-go="my"><span class="n">✍︎</span><span class="tt"><div>Мои фразы</div><div class="muted">Нет нужной фразы — спросите Claude и сохраните ответ офлайн</div></span></button>
     <button class="li" data-go="learn"><span class="n">🃏</span><span class="tt"><div>Карточки</div><div class="muted">Листайте фразы, вывески, слова уроков; знакомые — скрыть</div></span></button>
-    <button class="li" data-go="quiz"><span class="n">✅</span><span class="tt"><div>Тест</div><div class="muted">Выбрать перевод</div></span></button>
     <button class="li" data-go="gd"><span class="n">🧭</span><span class="tt"><div>Справка</div><div class="muted">Жизнь в Китае: оплата, такси, поезда, связь — с источниками</div></span></button>
     <button class="li" data-go="les"><span class="n">📖</span><span class="tt"><div>Уроки</div><div class="muted" id="lesdesc">Уроки по ситуациям: знакомство, цены, магазин, такси, поезд, отель, еда</div></span></button>
     <button class="li" data-go="syl"><span class="n">ā</span><span class="tt"><div>Слоги</div><div class="muted">Как читать pinyin, все 406 слогов</div></span></button>
@@ -424,7 +417,7 @@ window.addEventListener("popstate", e => {
 // ---- tabs
 let view = "home";
 const TABS = ["home", "dict", "show", "more"];
-const PARENT = {list: "dict", learn: "more", quiz: "more", syl: "more", places: "more", set: "more", my: "more", les: "more", gd: "more", faq: "more"};
+const PARENT = {list: "dict", learn: "more", syl: "more", places: "more", set: "more", my: "more", les: "more", gd: "more", faq: "more"};
 const tabOf = v => PARENT[v] || v;
 function go(v, keep, nav) {
   if (v === view && v === "home" && !keep) { homeQ = ""; homeOpen.clear(); homeEdit = false; }
@@ -438,7 +431,7 @@ function go(v, keep, nav) {
   view = v;
   for (const x of document.querySelectorAll("#tabs button")) x.classList.toggle("on", x.dataset.v === tabOf(v));
   for (const s of document.querySelectorAll("main > section")) s.classList.toggle("hide", s.id !== "v-" + view);
-  $("deck").parentElement.classList.toggle("hide", !(view === "learn" || view === "quiz"));
+  $("deck").parentElement.classList.toggle("hide", view !== "learn");
   try { speechSynthesis.cancel(); } catch {}
   render(); window.scrollTo(0, 0);
 }
@@ -584,32 +577,6 @@ $("rev").onchange = drawCard;
 $("pyf").checked = store.get("pyf", true);
 $("pyf").onchange = () => { store.set("pyf", $("pyf").checked); drawCard(); };
 onSwipe($("fc"), d => d > 0 ? prevCard() : nextCard());
-
-// ---- quiz
-let q = null, score = {ok: 0, n: 0};
-function newQ() {
-  const cs = visibleCards().length ? visibleCards() : cards();
-  const right = cs[Math.floor(Math.random() * cs.length)];
-  const wrong = [];
-  const okW = c => c !== right && c.ru !== right.ru && !wrong.some(w => w.ru === c.ru);
-  for (const pool of [cs, ALL]) for (const c of pool.slice().sort(() => Math.random() - .5)) { if (wrong.length >= 3) break; if (okW(c)) wrong.push(c); }
-  const opts = [right, ...wrong].sort(() => Math.random() - .5);
-  q = {right, opts, done: false};
-  $("qcard").innerHTML = `<div class="zh">${esc(right.zh)}</div><div class="hint muted">Что это значит?</div>`;
-  const box = $("qopts"); box.innerHTML = "";
-  opts.forEach(o => { const b = document.createElement("button"); b.className = "opt"; b.textContent = o.ru; b.onclick = () => answer(o, b); box.appendChild(b); });
-  $("qstat").textContent = `Верно ${score.ok} из ${score.n}`;
-}
-function answer(o, b) {
-  if (q.done) return; q.done = true; score.n++;
-  const btns = [...document.querySelectorAll(".opt")];
-  btns[q.opts.indexOf(q.right)].classList.add("ok");
-  if (o === q.right) score.ok++; else b.classList.add("bad");
-  $("qcard").innerHTML += `<div class="py">${esc(q.right.py)}</div><div class="cy">${esc(q.right.cy)}</div>`;
-  say(q.right.zh);
-  $("qstat").textContent = `Верно ${score.ok} из ${score.n}`;
-}
-$("qNext").onclick = newQ;
 
 // ---- Словарь: разделы по алфавиту → список раздела
 const norm = t => String(t).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
@@ -1328,8 +1295,11 @@ function drawFaq() {
 }
 
 // ---- вводный гайд (первый запуск) и «Что нового» (после обновления)
-const APP_REV = 16;  // номер редакции; cn:ver — последняя редакция, которую видел пользователь (до ред. 12 не хранилась → 11)
+const APP_REV = 17;  // номер редакции; cn:ver — последняя редакция, которую видел пользователь (до ред. 12 не хранилась → 11)
 const CHANGES = [
+  {rev: 17, date: "23.10.2026", items: [
+    "Раздел «Тест» убран: он повторял «Карточки». Проверить себя — в «Уроках» и «Карточках».",
+  ]},
   {rev: 16, date: "23.10.2026", items: [
     "Поиск на главной: в каждом блоке (фразы, справка, уроки) сначала по 3 результата, остальные — кнопкой «Показать больше». Все блоки видны без прокрутки.",
   ]},
@@ -1411,7 +1381,6 @@ function render() {
   if (view === "les") drawLessons();
   if (view === "gd") drawGuide();
   if (view === "learn") { if (!cur || !visibleCards().some(c => c.id === cur.id)) { resetCards(); nextCard(); } else drawCard(); }
-  if (view === "quiz") newQ();
   if (view === "dict") drawDict();
   if (view === "list") drawList();
   if (view === "syl") drawSyl();

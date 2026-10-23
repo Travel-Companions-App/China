@@ -2,7 +2,7 @@
 """Сквозной тест тренажёра в headless Chromium (Playwright).
 
 Проходит вводный гайд, главную (поиск, недавние, избранное, подсказки), Словарь, жесты (назад, свайп-удаление),
-показ крупно, «Мои места» → такси, все уроки, справку, карточки, тест, настройки, «Что нового»;
+показ крупно, «Мои места» → такси, все уроки, справку, карточки, настройки, «Что нового»;
 затем проверяет офлайн-перезагрузку, баннер обновления и полный сброс.
 
     python3 src/e2e.py            # тест
@@ -215,7 +215,7 @@ with sync_playwright() as p:
     pg.locator("#lhid [data-uh]").nth(1).click(); check(ev("Object.keys(hidden).length") == 0 and ev("visibleCards().length") == n, "карточка возвращена")
     pg.click("#bHidden")
     pg.click("#fc"); pg.click("#bHide"); check(ev("Object.keys(hidden).length") == 1, "скрытие для проверки перезапуска")
-    pg.click("#tabs [data-v=more]"); pg.click("[data-go=quiz]"); pg.locator("#qopts .opt").first.click(); check(ev("score.n") == 1, "тест отвечает")
+    check(pg.locator("[data-go=quiz]").count() == 0 and ev("typeof newQ") == "undefined", "раздела «Тест» нет")
     check(pg.locator("#v-more [data-go=list]").count() == 0, "в «Ещё» нет дубля «Фразы и вывески»")
     pg.click("#tabs [data-v=dict]"); pg.click("#v-dict [data-sec='Все вывески']"); pg.fill("#q", "метро"); check(pg.locator("#list .item").count() >= 1, "поиск внутри раздела «Вывески»")
     pg.locator("#list .item").first.click(); check(pg.is_visible("#full"), "фраза из списка открывается крупно"); pg.click("[data-f=close]")
