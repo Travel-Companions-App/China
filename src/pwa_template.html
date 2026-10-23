@@ -10,12 +10,12 @@
 <meta name="theme-color" content="#b3261e">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
-<title>Китайский для туриста — офлайн-разговорник и тренажёр</title>
+<title>Travel Companions · Китайский — офлайн-разговорник и тренажёр</title>
 <meta name="description" content="Бесплатный офлайн-разговорник китайского для русскоязычных туристов: фразы с иероглифами, pinyin и произношением кириллицей, карточки «показать таксисту» со своими адресами, уроки, справочник о жизни в Китае. Работает без интернета на iPhone.">
 <link rel="canonical" href="__SITE__">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ru_RU">
-<meta property="og:title" content="Китайский для туриста — офлайн-разговорник">
+<meta property="og:title" content="Travel Companions · Китайский — офлайн-разговорник">
 <meta property="og:description" content="Фразы с pinyin и кириллицей «как слышится», карточки для таксиста со своими адресами. Работает офлайн, ставится на экран «Домой».">
 <meta property="og:url" content="__SITE__">
 <meta property="og:image" content="__SITE__og.png">
@@ -1194,12 +1194,12 @@ window.addEventListener("offline", () => view === "home" && drawHome());
 
 // ---- настройки: тема, резервная копия, версия
 function setTheme(t) { store.set("theme", t); if (t === "auto") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t; }
-// app: "cn-trainer" — метка формата копии (старое имя проекта); не менять, иначе не восстановятся старые копии
+// app: метка формата резервной копии
 async function exportData() {
   const data = {};
   for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k.startsWith("cn:")) data[k] = localStorage.getItem(k); }
-  const text = JSON.stringify({app: "cn-trainer", ver: DATA.built, saved: new Date().toISOString(), data}, null, 1);
-  const name = "cn-trainer-" + isoDay(Date.now()) + ".json";
+  const text = JSON.stringify({app: "travel-companions-china", ver: DATA.built, saved: new Date().toISOString(), data}, null, 1);
+  const name = "travel-companions-china-" + isoDay(Date.now()) + ".json";
   try {
     const file = new File([text], name, {type: "application/json"});
     if (navigator.canShare && navigator.canShare({files: [file]})) { await navigator.share({files: [file], title: name}); return; }
@@ -1212,7 +1212,7 @@ function importData(file) {
   r.onload = () => {
     try {
       const j = JSON.parse(r.result);
-      if (j.app !== "cn-trainer" || !j.data) throw new Error("не похоже на копию тренажёра");
+      if (j.app !== "travel-companions-china" || !j.data) throw new Error("не похоже на копию тренажёра");
       if (!confirm(`Восстановить копию от ${String(j.saved).slice(0, 10)}? Текущий прогресс будет заменён.`)) return;
       for (const k of Object.keys(localStorage)) if (k.startsWith("cn:")) localStorage.removeItem(k);
       for (const [k, v] of Object.entries(j.data)) if (k.startsWith("cn:")) localStorage.setItem(k, v);
@@ -1305,8 +1305,12 @@ function drawFaq() {
 }
 
 // ---- вводный гайд (первый запуск) и «Что нового» (после обновления)
-const APP_REV = 18;  // номер редакции; cn:ver — последняя редакция, которую видел пользователь (до ред. 12 не хранилась → 11)
+const APP_REV = 19;  // номер редакции; cn:ver — последняя редакция, которую видел пользователь (до ред. 12 не хранилась → 11)
 const CHANGES = [
+  {rev: 19, date: "24.10.2026", items: [
+    "Полное название приложения — «Travel Companions · Китайский».",
+    "Файл резервной копии называется по-новому; копии, сохранённые раньше, не восстанавливаются.",
+  ]},
   {rev: 18, date: "24.10.2026", items: [
     "Пока приложение загружается, вместо пустого экрана показывается заставка.",
   ]},

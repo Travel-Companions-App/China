@@ -64,7 +64,7 @@ else:
     data["built"] = datetime.date.today().isoformat()
     open(stamp_file, "w").write(data["ver"] + " " + data["built"] + "\n")
 n_phr = sum(len(v) for v in PHRASES.values())
-jsonld = {"@context": "https://schema.org", "@type": "WebApplication", "name": "Китайский для туриста",
+jsonld = {"@context": "https://schema.org", "@type": "WebApplication", "name": "Travel Companions · Китайский",
           "url": SITE, "inLanguage": "ru", "applicationCategory": "EducationalApplication", "operatingSystem": "iOS, Android, любой браузер",
           "isAccessibleForFree": True, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "RUB"},
           "description": f"Офлайн-разговорник китайского для туристов: {n_phr} фраз, {len(SIGNS)} вывесок, {len(LESSONS)} уроков, справочник о жизни в Китае. Pinyin и произношение кириллицей.",
@@ -74,7 +74,7 @@ html = (tpl.replace("__DATA__", json.dumps(data, ensure_ascii=False))
            .replace("__SITE__", SITE))
 open(os.path.join(OUT, "index.html"), "w", encoding="utf-8").write(html)
 
-manifest = {"id": "./", "name": "Китайский: разговорник", "short_name": "Китайский", "start_url": "./", "scope": "./",
+manifest = {"id": "./", "name": "Travel Companions · Китайский", "short_name": "Китайский", "start_url": "./", "scope": "./",
             "description": "Офлайн-разговорник и тренажёр китайского для туриста",
             "display": "standalone", "background_color": "#faf8f5", "theme_color": "#b3261e", "lang": "ru",
             "categories": ["education", "travel"],

@@ -1,4 +1,4 @@
-# Китайский для туриста — офлайн-разговорник и тренажёр
+# Travel Companions · Китайский — офлайн-разговорник и тренажёр
 
 [![Проверки](https://github.com/Travel-Companions-App/China/actions/workflows/check.yml/badge.svg)](https://github.com/Travel-Companions-App/China/actions/workflows/check.yml)
 [![Лицензия: MIT](https://img.shields.io/badge/лицензия-MIT-green.svg)](LICENSE)
