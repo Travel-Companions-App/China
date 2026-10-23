@@ -210,9 +210,19 @@ button{-webkit-user-select:none;user-select:none}
 #intro .dots i{width:8px;height:8px;border-radius:4px;background:var(--line)}
 #intro .dots i.on{background:var(--acc);width:20px}
 #intro .ver{font-size:13px;color:var(--muted);margin-top:14px}
+#splash{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;transition:opacity .25s}
+#splash b{font-size:88px;line-height:1;color:var(--acc);font-weight:700}
+#splash div{font-size:22px;font-weight:600;margin-top:10px}
+#splash.off{opacity:0;pointer-events:none}
 </style>
+<noscript><style>#splash{display:none}</style></noscript>
 </head>
 <body>
+<div id="splash" aria-hidden="true"><b>中</b><div>Китайский</div><span class="muted">Загрузка…</span></div>
+<script>/* заставка снимается после render(); при ошибке JS — сразу, чтобы не закрыть экран */
+function hideSplash() { const s = document.getElementById("splash"); if (!s || s.classList.contains("off")) return; s.classList.add("off"); setTimeout(() => s.remove(), 300); }
+window.addEventListener("error", hideSplash);
+</script>
 <header><select id="deck"></select><div class="voice muted" id="vstat"></div></header>
 <noscript><p style="padding:16px">Офлайн-разговорник китайского для туриста: фразы с иероглифами, pinyin и произношением кириллицей, карточки для таксиста, уроки и справочник. Для работы включите JavaScript. Исходники и описание: <a href="https://github.com/Travel-Companions-App/China">github.com/Travel-Companions-App/China</a>.</p></noscript>
 <main>
@@ -1295,8 +1305,11 @@ function drawFaq() {
 }
 
 // ---- вводный гайд (первый запуск) и «Что нового» (после обновления)
-const APP_REV = 17;  // номер редакции; cn:ver — последняя редакция, которую видел пользователь (до ред. 12 не хранилась → 11)
+const APP_REV = 18;  // номер редакции; cn:ver — последняя редакция, которую видел пользователь (до ред. 12 не хранилась → 11)
 const CHANGES = [
+  {rev: 18, date: "24.10.2026", items: [
+    "Пока приложение загружается, вместо пустого экрана показывается заставка.",
+  ]},
   {rev: 17, date: "23.10.2026", items: [
     "Раздел «Тест» убран: он повторял «Карточки». Проверить себя — в «Уроках» и «Карточках».",
   ]},
@@ -1390,6 +1403,7 @@ $("lesdesc").textContent = `${DATA.lessons.length} уроков по ситуа�
 render();
 onSwipe($("intro"), d => { if ($("intro").dataset.mode !== "intro") return; introI = Math.max(0, Math.min(INTRO.length - 1, introI - d)); drawIntro(); });
 startupNotes();
+hideSplash();
 
 // ---- офлайн-кэш и обновления: новая версия ставится в фоне, страница предлагает перезапуск
 let swReg = null;

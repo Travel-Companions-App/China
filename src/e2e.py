@@ -48,6 +48,7 @@ with sync_playwright() as p:
     pg.goto(URL); pg.wait_for_function("typeof render === 'function' && document.querySelector('#hq') !== null", timeout=15000)
     check(not errors, "страница загрузилась без ошибок JS" + ("" if not errors else ": " + errors[0]))
     if errors: sys.exit(1)
+    pg.wait_for_timeout(400); check(ev("!document.getElementById('splash')"), "заставка загрузки снята после запуска")
     swipe = lambda sel, dx: ev(f"__swipe({sel!r}, {dx})")
 
     print("Вводный гайд")
