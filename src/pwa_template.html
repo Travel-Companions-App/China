@@ -94,7 +94,9 @@ h2{font-size:13px;color:var(--acc);margin:20px 0 2px;text-transform:uppercase;le
 .quick{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
 .qk{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:14px;padding:12px 8px;font:inherit;font-size:13px;text-align:center}
 .qk b{display:block;font-size:22px;margin-bottom:4px;font-weight:700}
-.qk.main{background:var(--acc);border-color:var(--acc);color:#fff}
+.qk.sos{background:color-mix(in srgb,var(--acc) 9%,var(--card));border-color:color-mix(in srgb,var(--acc) 35%,var(--line))}
+#toast{position:fixed;left:50%;width:max-content;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:30;max-width:calc(100% - 32px);background:#222;color:#fff;border-radius:12px;padding:10px 14px;font-size:15px;text-align:center;pointer-events:none;opacity:0;transition:opacity .2s}
+#toast.on{opacity:.95}
 .blk{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:10px;width:100%;font:inherit;color:var(--fg);text-align:left;display:block}
 .blk .lbl{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
 .blk .big2{font-size:20px;font-weight:600;margin-top:2px}
@@ -215,7 +217,7 @@ button{-webkit-user-select:none;user-select:none}
 <main>
   <section id="v-home" class="home"></section>
   <section id="v-show" class="hide">
-    <p class="muted">Здесь ваше избранное. Нажмите ☆ на любой фразе — в поиске, Словаре или при показе крупно — и она появится здесь. Нажмите карточку — откроется крупно, листайте свайпом.</p>
+    <p class="muted">Нажмите ☆ на любой фразе — в поиске, Словаре или при показе крупно — и она появится здесь. Нажмите карточку — откроется крупно, листайте свайпом.</p>
     <div id="shows"></div>
   </section>
   <section id="v-learn" class="hide">
@@ -270,10 +272,11 @@ button{-webkit-user-select:none;user-select:none}
 <nav id="tabs">
   <button data-v="home" class="on"><b>你</b>Главная</button>
   <button data-v="dict"><b>词</b>Словарь</button>
-  <button data-v="show"><b>📋</b>Показать</button>
+  <button data-v="show"><b>★</b>Избранное</button>
   <button data-v="more"><b>⋯</b>Ещё</button>
 </nav>
 <div id="full" class="hide"></div>
+<div id="toast" role="status" aria-live="polite"></div>
 <div id="intro" class="hide"></div>
 <div id="upd" class="hide"><span>Доступна новая версия</span><button id="updgo">Обновить</button></div>
 <script>
@@ -455,7 +458,10 @@ function presetCards() { return [...DATA.show.map(c => ({...c, id: "show:" + c.i
 function drawShows() {
   const box = $("shows"); box.innerHTML = "";
   const all = favCards().map(f => ({...f, zh: f.lines, title: f.deck === "★ Избранное" ? "★" : f.deck}));
-  if (!all.length) { box.innerHTML = `<p class="muted" style="margin-top:20px">Пока пусто. Найдите фразу через поиск на главной или в «Словаре» и нажмите ☆.</p>`; return; }
+  const add = () => { dictHint = true; go("dict"); };
+  if (!all.length) { box.innerHTML = `<p class="empty">Пока пусто.</p><button class="addfav" id="showadd"><b>＋</b>Добавить в избранное</button>`; $("showadd").onclick = add; return; }
+  const hd = document.createElement("div"); hd.className = "hhead"; hd.innerHTML = `<h2>★ Избранное · ${all.length}</h2><button class="plus" aria-label="Добавить в избранное">＋</button>`;
+  hd.querySelector(".plus").onclick = add; box.appendChild(hd);
   all.forEach((c, i) => {
     const d = document.createElement("div"); d.className = "sc";
     d.innerHTML = `<div class="zh">${esc(c.zh.join(""))}</div><div class="muted"><span class="py">${esc(c.py || "")}</span> · ${esc(c.ru)}</div>`;
@@ -489,7 +495,7 @@ function closeFullNow() { if (!fullS) return; $("full").classList.add("hide"); $
 function drawFull() {
   const S = fullS, c = S.list[S.i], lines = [].concat(c.lines || c.zh), F = $("full");
   F.style.setProperty("--fz", S.fz); F.classList.toggle("rot", S.rot);
-  F.innerHTML = `<div class="ftop"><button class="fb" data-f="close">✕</button><span class="fpos">${S.list.length > 1 ? (S.i + 1) + " / " + S.list.length : ""}</span><span style="display:flex;gap:8px"><button class="fb${isPinned(c) ? " on" : ""}" data-f="pin" aria-label="Кнопка на главной">📌</button><button class="fb${isFav(c) ? " on" : ""}" data-f="fav">${isFav(c) ? "★" : "☆"}</button></span></div>
+  F.innerHTML = `<div class="ftop"><button class="fb" data-f="close">✕</button><span class="fpos">${S.list.length > 1 ? (S.i + 1) + " / " + S.list.length : ""}</span><span style="display:flex;gap:8px"><button class="fb${isPinned(c) ? " on" : ""}" data-f="pin">${isPinned(c) ? "📌 На главной" : "📌 На главную"}</button><button class="fb${isFav(c) ? " on" : ""}" data-f="fav">${isFav(c) ? "★" : "☆"}</button></span></div>
     <div class="fbody"><div class="zh">${lines.map(esc).join("<br>")}</div>
     <div class="s">${esc(c.py || "")}</div><div class="cy2">${esc(c.cy || "")}</div><div class="s">${esc(c.ru || "")}</div></div>
     <div class="fbot"><button class="fb" data-f="minus">A−</button><button class="fb" data-f="plus">A+</button><button class="fb${S.rot ? " on" : ""}" data-f="rot">⟳ Поворот</button><button class="fb" data-f="say">🔊</button></div>`;
@@ -498,7 +504,7 @@ $("full").onclick = e => {
   const b = e.target.closest("[data-f]"); if (!b || !fullS) return; const k = b.dataset.f, c = fullS.list[fullS.i];
   if (k === "close") return closeFull();
   if (k === "fav") toggleFav({...c, zh: [].concat(c.lines || c.zh)});
-  if (k === "pin") togglePin(c);
+  if (k === "pin") toast(togglePin(c) ? "Кнопка добавлена наверх главной" : "Кнопка убрана с главной");
   if (k === "plus") fullS.fz = Math.min(2.2, +(fullS.fz + .15).toFixed(2));
   if (k === "minus") fullS.fz = Math.max(.6, +(fullS.fz - .15).toFixed(2));
   if (k === "plus" || k === "minus") store.set("fz", fullS.fz);
@@ -607,7 +613,7 @@ $("qNext").onclick = newQ;
 // ---- Словарь: разделы по алфавиту → список раздела
 const norm = t => String(t).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 let dictDeck = "Все вывески", dictHint = false;
-const FAV_HINT = `<div class="hintbox">Нажмите ☆ у фразы — она появится в «Избранном» на главной и во вкладке «Показать».</div>`;
+const FAV_HINT = `<div class="hintbox">Нажмите ☆ у фразы — она появится во вкладке «Избранное» внизу экрана.</div>`;
 function dictSections() {
   const out = Object.keys(DATA.phrases).map(k => ({deck: "Фразы: " + k, name: k}));
   out.push({deck: "Все вывески", name: "Вывески"});
@@ -616,7 +622,7 @@ function dictSections() {
   return out.sort((a, b) => a.name.localeCompare(b.name, "ru"));
 }
 function drawDict() {
-  $("v-dict").innerHTML = (dictHint ? `<div class="hintbox"><b>Добавить в избранное:</b> откройте раздел и нажмите ☆ у нужной фразы. Найти быстрее — поиск на главной, там тоже есть ☆.</div>`
+  $("v-dict").innerHTML = (dictHint ? `<div class="hintbox"><b>Добавить в избранное:</b> откройте раздел и нажмите ☆ у нужной фразы — она появится во вкладке «Избранное». Найти быстрее — поиск на главной, там тоже есть ☆.</div>`
       : `<p class="muted" style="margin:4px 0 0">Все фразы и вывески по разделам. Нажмите фразу — откроется крупно, ☆ — в избранное.</p>`) +
     `<div class="dsecs">` + dictSections().map(x => `<button class="sec" data-sec="${esc(x.deck)}">${esc(x.name)}<small>${x.n}</small></button>`).join("") + `</div>`;
 }
@@ -1080,9 +1086,10 @@ function drawHomeRes() {
 const ICON = {taxi: "🗺", walk: "🧭", nochinese: "🗣", help: "🆘", checkin: "🏨", train: "🚆", food: "🍜", bag: "🧳"};
 const DEF_QUICK = [{k: "walk"}, {k: "show", id: "nochinese"}, {k: "show", id: "help"}];
 const BLOCKS = {quick: "Кнопки", fav: "Избранное", recent: "Недавние"};  // «Разделы» (ред. ≤11) — теперь вкладка «Словарь»
+const DEF_OFF = ["fav"];  // ред. 15: избранное — вкладкой внизу, на главную — через «⚙ Настроить главную»
 const quick = () => store.get("quick", DEF_QUICK);
 const layout = () => {
-  const l = store.get("homeLayout", {}); const order = (l.order || []).filter(b => BLOCKS[b]); for (const b of Object.keys(BLOCKS)) if (!order.includes(b)) order.push(b);
+  const l = store.get("homeLayout", null) || {off: DEF_OFF}; const order = (l.order || []).filter(b => BLOCKS[b]); for (const b of Object.keys(BLOCKS)) if (!order.includes(b)) order.push(b);
   let off = (l.off || []).filter(b => BLOCKS[b]); if (order.every(b => off.includes(b))) off = off.filter(b => b !== order[0]);  // хотя бы один блок виден
   return {order, off};
 };
@@ -1096,10 +1103,13 @@ function qFromCard(c) {
   return {k: "card", c: {id: favId({...c, zh: lines}), zh: lines, py: c.py || "", cy: c.cy || "", ru: c.ru || ""}};
 }
 const isPinned = c => quick().some(q => qKey(q) === qKey(qFromCard(c)));
-function togglePin(c) {
-  const k = qKey(qFromCard(c)), q = quick();
-  store.set("quick", q.some(x => qKey(x) === k) ? q.filter(x => qKey(x) !== k) : [...q, qFromCard(c)]);
+function togglePin(c) {  // → true, если кнопка добавлена
+  const k = qKey(qFromCard(c)), q = quick(), had = q.some(x => qKey(x) === k);
+  store.set("quick", had ? q.filter(x => qKey(x) !== k) : [...q, qFromCard(c)]);
+  return !had;
 }
+let toastT = 0;
+function toast(t) { const el = $("toast"); el.textContent = t; el.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove("on"), 2200); }
 function qResolve(q) {  // → {icon, label, card?} или null, если источник удалён
   if (q.k === "taxi") return {icon: "🚕", label: "Такси"};
   if (q.k === "walk") return {icon: "🚶", label: "Как пройти"};
@@ -1124,7 +1134,7 @@ function drawHomeEdit() {
   const opts = [["walk", "🚶 Как пройти — выбор места"], ["taxi", "🚕 Такси — выбор места"], ...places().map(p => ["walk:" + p.id, "🚶 Как пройти: " + p.name]), ...places().map(p => ["place:" + p.id, "📍 Такси: " + p.name]),
     ...DATA.show.filter(c => !have.has("show:" + c.id)).map(c => ["show:" + c.id, (ICON[c.id] || "💬") + " " + c.title])].filter(([k]) => !have.has(k));
   if (opts.length) h += `<div class="erow"><select id="qadd"><option value="">+ Добавить кнопку…</option>${opts.map(([k, t]) => `<option value="${esc(k)}">${esc(t)}</option>`).join("")}</select></div>`;
-  h += `<p class="muted">Любую фразу можно сделать кнопкой: откройте её крупно и нажмите 📌.</p>`;
+  h += `<div class="hintbox"><b>Своя кнопка:</b> откройте любую фразу или место крупно и нажмите «📌 На главную» вверху экрана. Убрать — ✕ в этом списке.</div>`;
   h += `<div class="row"><button class="btn" data-he="reset">Как было</button><button class="btn yes" data-he="done">Готово</button></div>`;
   $("hbody").innerHTML = h;
   $("qadd") && ($("qadd").onchange = e => { const v = e.target.value; if (!v) return; const [k, ...rest] = v.split(":"); const id = rest.join(":");
@@ -1186,11 +1196,11 @@ function drawHome() {
   const rc = recent(), fv = favCards(), L = layout();
   const blk = {
     quick: () => { const qs = quick().map((q, i) => [qResolve(q), i]).filter(([r]) => r);
-      return qs.length ? `<div class="quick">` + qs.map(([r, i], n) => `<button class="qk${n ? "" : " main"}" data-q="${i}"><b>${r.icon}</b>${esc(r.label)}</button>`).join("") + `</div>` : ""; },
+      return qs.length ? `<div class="quick">` + qs.map(([r, i], n) => `<button class="qk${quick()[i].k === "show" && quick()[i].id === "help" ? " sos" : ""}" data-q="${i}"><b>${r.icon}</b>${esc(r.label)}</button>`).join("") + `</div>` : ""; },
     recent: () => rc.length ? `<div class="hhead"><h2>Недавние</h2><button data-h="clr">очистить</button></div>` + rows(rc, c => "recent:" + c.id)
       : `<h2>Недавние</h2><p class="empty">Здесь появятся последние 12 фраз, которые вы открывали крупно, — чтобы вернуться к ним, не ища снова.</p>`,
     fav: () => fv.length ? `<div class="hhead"><h2>★ Избранное</h2><button class="plus" data-h="addfav" aria-label="Добавить в избранное">＋</button></div>` + rows(fv, c => "fav:" + c.id)
-      : `<h2>★ Избранное</h2><p class="empty">Фразы, которые нужны часто, — под рукой и во вкладке «Показать».</p><button class="addfav" data-h="addfav"><b>＋</b>Добавить в избранное</button>`,
+      : `<h2>★ Избранное</h2><p class="empty">Фразы, которые нужны часто, — здесь и во вкладке «Избранное».</p><button class="addfav" data-h="addfav"><b>＋</b>Добавить в избранное</button>`,
   };
   let h = L.order.filter(b => !L.off.includes(b)).map(b => blk[b]()).join("");
   h += `<div class="row"><button class="btn" data-h="edit" style="font-size:14px">⚙ Настроить главную</button></div>`;
@@ -1256,7 +1266,7 @@ function drawSettings() {
     if (k === "hard") hardRefresh();
     const CLR = {"clr-recent": [["recent"], "Очистить недавние?"], "clr-places": [["places", "trips"], "Удалить все мои места? Кнопки к конкретным местам тоже пропадут."],
       "clr-home": [["quick", "homeLayout"], "Вернуть кнопки и порядок блоков главной как было?"], "clr-hidden": [["hidden"], "Вернуть все скрытые карточки?"],
-      "clr-favs": [["favs"], "Очистить избранное (и вкладку «Показать»)?"]};
+      "clr-favs": [["favs"], "Очистить избранное?"]};
     if (CLR[k] && confirm(CLR[k][1])) { for (const key of CLR[k][0]) localStorage.removeItem("cn:" + key);
       if (k === "clr-places") store.set("places", []);
       location.reload(); }
@@ -1293,8 +1303,8 @@ const FAQ = [
   ["Как быстро найти фразу", `<p>Пишите в поиск на главной: по-русски («вода»), pinyin без тонов («shui»), кириллицей («шуэй») или иероглифами. Нажмите фразу — она откроется крупно: иероглифы, pinyin, кириллица «как слышится», перевод и 🔊.</p><p>Весь разговорник по разделам — вкладка «Словарь» (разделы по алфавиту, внутри — поиск по разделу).</p><p>Нет нужной фразы — внизу результатов «Спросить Claude»: ответ сохраняется в «Мои фразы» и дальше работает без интернета.</p>`],
   ["Как показать фразу собеседнику", `<p>Нажмите фразу — откроется крупно на белом фоне. A+ / A− — размер, «Поворот» — горизонтально, свайп — соседние фразы. Пока карточка открыта, экран не гаснет (на iPhone с iOS 18.4 и новее).</p>`],
   ["Как пройти и такси: свои адреса", `<p>Кнопка «Как пройти» на главной → список мест → карточка для прохожего «Скажите, как пройти сюда?» с названием и адресом. Такси — «Ещё → Мои места» (карточка для водителя); кнопку «Такси» можно вернуть на главную через «⚙ Настроить главную».</p><p>«+ Добавить место»: название по-русски для себя, название и адрес иероглифами (скопируйте из подтверждения брони или карты, или попросите на ресепшн написать). Нажали место — карточка для водителя с адресом.</p><p>Нет адреса — «Покажу на карте»: «как пройти сюда?» или «отвезите сюда» плюс «покажу на карте».</p><p>Править — кнопка ✎ справа, удалить — свайп влево по месту → «Удалить».</p>`],
-  ["Как настроить главную", `<p>Внизу главной — «⚙ Настроить главную»: какие блоки показывать (кнопки, избранное, недавние) и в каком порядке, какие кнопки наверху. Один блок всегда остаётся. Разделы фраз — во вкладке «Словарь».</p><p>Любую фразу или место можно сделать кнопкой: откройте крупно и нажмите 📌. Нажмите 📌 ещё раз — кнопка уберётся.</p>`],
-  ["Что во вкладке «Показать»", `<p>Только ваше избранное. Нажмите ☆ на фразе (в поиске, Словаре, при показе крупно) — она появится там и в блоке «Избранное» на главной. Пустое избранное — на главной кнопка «＋ Добавить в избранное», она откроет Словарь.</p>`],
+  ["Как настроить главную", `<p>Внизу главной — «⚙ Настроить главную»: какие блоки показывать (кнопки, недавние, избранное) и в каком порядке, какие кнопки наверху. Один блок всегда остаётся. Избранное на главной по умолчанию выключено — оно во вкладке «Избранное». Разделы фраз — во вкладке «Словарь».</p><p>Любую фразу или место можно сделать кнопкой: откройте крупно и нажмите «📌 На главную» вверху экрана. Нажмите ещё раз («📌 На главной») — кнопка уберётся.</p>`],
+  ["Что во вкладке «Избранное»", `<p>Фразы, отмеченные ☆ (в поиске, Словаре, при показе крупно), карточками для собеседника. ＋ откроет Словарь с подсказкой. Показать избранное и на главной — «⚙ Настроить главную» → галочка «Избранное».</p>`],
   ["Жесты", `<ul><li><b>Назад</b> — свайп от самого левого края экрана вправо (как в приложениях iOS) или кнопка «‹ …» сверху.</li><li><b>Удалить</b> из избранного, недавних или моих мест — свайп по строке влево → «Удалить».</li><li><b>Показ крупно</b> — свайп влево / вправо листает соседние фразы.</li><li><b>Карточки</b> — свайп влево — дальше, вправо — назад.</li><li>Двойной тап страницу не увеличивает; если нужно крупнее — A+ в показе крупно.</li></ul>`],
   ["Карточки для заучивания", `<p>«Ещё → Карточки». Сверху выберите колоду. На карточке иероглифы и pinyin; нажмите — кириллица, перевод и звук. «Дальше» / «Назад» или свайп. Знакомое — «Знаю — не показывать»; вернуть — «Скрытые».</p>`],
   ["Нет звука", `<ul><li>Выключите беззвучный режим iPhone: в беззвучном режиме Safari не воспроизводит озвучку.</li><li>Проверьте громкость или подключите наушники.</li><li>«Ещё → Настройки → Голос → Проверить голос». Если голосов 0 — скачайте китайский голос в настройках iPhone: Универсальный доступ → раздел озвучивания текста (Spoken Content / Read &amp; Speak) → Голоса → Китайский.</li></ul>`],
@@ -1313,8 +1323,13 @@ function drawFaq() {
 }
 
 // ---- вводный гайд (первый запуск) и «Что нового» (после обновления)
-const APP_REV = 14;  // номер редакции; cn:ver — последняя редакция, которую видел пользователь (до ред. 12 не хранилась → 11)
+const APP_REV = 15;  // номер редакции; cn:ver — последняя редакция, которую видел пользователь (до ред. 12 не хранилась → 11)
 const CHANGES = [
+  {rev: 15, date: "23.10.2026", items: [
+    "Вкладка «Показать» теперь называется «Избранное». С главной блок избранного убран — вернуть: «⚙ Настроить главную» → галочка «Избранное».",
+    "Своя кнопка на главной — «📌 На главную» вверху показа крупно; после нажатия видно, что кнопка добавлена.",
+    "Кнопка «Помощь» (SOS) выделена мягким цветом, остальные кнопки — одинаковые.",
+  ]},
   {rev: 14, date: "23.10.2026", items: [
     "Главная: кнопка «Как пройти» вместо «Такси». Выберите место из «Моих мест» — откроется карточка для прохожего «Скажите, как пройти сюда?» с адресом иероглифами.",
     "«Такси» осталось в «Ещё → Мои места». Вернуть кнопку на главную — «⚙ Настроить главную → + Добавить кнопку».",
@@ -1335,9 +1350,9 @@ const CHANGES = [
 ];
 const INTRO = [
   {big: "你好", h: "Помощник по фразам для поездки в Китай", body: `<p>Нужная фраза за пару секунд: иероглифы, pinyin, произношение кириллицей «как слышится» и перевод.</p><p>Покажите фразу собеседнику крупно или включите озвучку. Немного поучиться — тоже здесь: карточки и уроки.</p><p>Работает без интернета. Ваши данные хранятся только на этом телефоне.</p>`},
-  {big: "🔎", h: "Главная", body: `<ul><li><b>Поиск</b> — по-русски, pinyin без тонов, кириллицей или иероглифами.</li><li><b>Кнопки</b> сверху — «Как пройти», «Не говорю», «Помощь». Свои — через «⚙ Настроить главную» или 📌 у любой фразы.</li><li><b>★ Избранное</b> — то, что нужно часто. ＋ — добавить.</li><li><b>Недавние</b> — последние открытые фразы.</li></ul>`},
-  {big: "A+", h: "Показ крупно", body: `<p>Нажмите фразу — она откроется на весь экран для собеседника.</p><ul><li>A− / A+ — размер, ⟳ — поворот</li><li>🔊 — озвучка (в беззвучном режиме iPhone молчит)</li><li>☆ — в избранное, 📌 — кнопкой на главную</li><li>свайп — соседняя фраза</li></ul>`},
-  {big: "词", h: "Нижняя панель", body: `<ul><li><b>Словарь</b> — все разделы по алфавиту.</li><li><b>Показать</b> — избранное карточками.</li><li><b>Ещё</b> — Мои места (адреса для такси и прохожих), Карточки, Уроки, Справка, Настройки, Помощь.</li></ul><p>Назад — свайп от левого края экрана. Удалить строку — свайп по ней влево.</p>`},
+  {big: "🔎", h: "Главная", body: `<ul><li><b>Поиск</b> — по-русски, pinyin без тонов, кириллицей или иероглифами.</li><li><b>Кнопки</b> сверху — «Как пройти», «Не говорю», «Помощь». Свои — «📌 На главную» у любой фразы или «⚙ Настроить главную».</li><li><b>Недавние</b> — последние открытые фразы.</li></ul>`},
+  {big: "A+", h: "Показ крупно", body: `<p>Нажмите фразу — она откроется на весь экран для собеседника.</p><ul><li>A− / A+ — размер, ⟳ — поворот</li><li>🔊 — озвучка (в беззвучном режиме iPhone молчит)</li><li>☆ — в избранное, «📌 На главную» — кнопкой наверх главной</li><li>свайп — соседняя фраза</li></ul>`},
+  {big: "词", h: "Нижняя панель", body: `<ul><li><b>Словарь</b> — все разделы по алфавиту.</li><li><b>★ Избранное</b> — фразы, отмеченные ☆, карточками.</li><li><b>Ещё</b> — Мои места (адреса для такси и прохожих), Карточки, Уроки, Справка, Настройки, Помощь.</li></ul><p>Назад — свайп от левого края экрана. Удалить строку — свайп по ней влево.</p>`},
 ];
 let introI = 0, introDone = null;
 function overlayOpen() { if ($("intro").classList.contains("hide")) { $("intro").classList.remove("hide"); navPush(overlayCloseNow); } }
