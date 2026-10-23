@@ -439,16 +439,19 @@ function go(v, keep, nav) {
   render(); window.scrollTo(0, 0);
 }
 $("tabs").onclick = e => { const b = e.target.closest("button"); if (b) go(b.dataset.v); };
-$("v-more").onclick = e => { const b = e.target.closest("[data-go]"); if (b) go(b.dataset.go); };
+$("v-more").onclick = e => { const b = e.target.closest("[data-go]"); if (!b) return; if (b.dataset.go === "places") placeMode = "taxi"; go(b.dataset.go); };
 
 // ---- show cards
-function placeCard(p) {
-  const T = DATA.place;
+function placeCard(p, m) {  // m: "walk" — «Как пройти → место» для прохожего, иначе «Такси → место»
+  const T = DATA.place, nm = p.name || "это место", note = p.note ? " (" + p.note + ")" : "";
+  if (m === "walk") return {id: "walk:" + p.id, title: "Как пройти → " + (p.name || "место"),
+    zh: [T.walk[0], p.zh, p.addr].filter(Boolean),
+    py: T.walk[1], cy: T.walk[2], ru: "Скажите, пожалуйста, как пройти сюда: " + nm + note + ". [из памяти]"};
   return {id: "place:" + p.id, title: "Такси → " + (p.name || "место"),
     zh: [T.taxi[0], p.zh, p.addr, p.phone ? T.phone + p.phone : ""].filter(Boolean),
     py: T.taxi[1], cy: T.taxi[2], ru: "Водитель, отвезите нас, пожалуйста, сюда: " + (p.name || "это место") + (p.note ? " (" + p.note + ")" : "") + "."};
 }
-function presetCards() { return [...DATA.show.map(c => ({...c, id: "show:" + c.id})), ...places().map(placeCard)]; }
+function presetCards() { return [...DATA.show.map(c => ({...c, id: "show:" + c.id})), ...places().map(p => placeCard(p))]; }
 function drawShows() {
   const box = $("shows"); box.innerHTML = "";
   const all = favCards().map(f => ({...f, zh: f.lines, title: f.deck === "★ Избранное" ? "★" : f.deck}));
@@ -922,7 +925,7 @@ function places() {
   }
   return p.slice().sort((a, b) => (b.t || 0) - (a.t || 0));
 }
-let placeEdit = null;
+let placeEdit = null, placeMode = "taxi";  // "taxi" — «Ещё → Мои места» и кнопка «Такси»; "walk" — кнопка «Как пройти»
 function drawPlaces() {
   const box = $("v-places"), all = places();
   if (placeEdit) {
@@ -938,8 +941,10 @@ function drawPlaces() {
       <div class="row"><button class="btn yes" data-a="save">Сохранить</button></div>
       ${s.id ? `<div class="row"><button class="btn" data-a="del">Удалить место</button></div>` : ""}`;
   } else {
-    box.innerHTML = `<h2 style="margin-top:4px">Такси: куда едем?</h2><p class="muted">Нажмите место — откроется карточка для водителя. Адреса хранятся только на этом iPhone.</p>` +
-      `<div class="pl"><button class="li" data-a="map"><span class="n">🗺</span><span class="tt"><div>Покажу на карте</div><div class="zh2" lang="zh">请带我们去这里。我给您看地图。</div></span></button></div>` +
+    const W = placeMode === "walk", mapZh = DATA.show.find(x => x.id === (W ? "walk" : "taxi")).zh.join("");
+    box.innerHTML = (W ? `<h2 style="margin-top:4px">Как пройти: куда идём?</h2><p class="muted">Нажмите место — откроется карточка для прохожего: «Скажите, как пройти сюда?». Адреса хранятся только на этом iPhone.</p>`
+        : `<h2 style="margin-top:4px">Такси: куда едем?</h2><p class="muted">Нажмите место — откроется карточка для водителя. Адреса хранятся только на этом iPhone.</p>`) +
+      `<div class="pl"><button class="li" data-a="map"><span class="n">🗺</span><span class="tt"><div>Покажу на карте</div><div class="zh2" lang="zh">${esc(mapZh)}</div></span></button></div>` +
       all.map((p, i) => swWrap("place:" + p.id, `<div class="pl"><button class="li" data-p="${i}"><span class="n">📍</span><span class="tt"><div>${esc(p.name || "Без названия")}</div><div class="zh2" lang="zh">${esc(p.zh || "")}</div><div class="muted" lang="zh">${esc(p.addr || "")}</div></span></button><button class="ed" data-e="${i}" aria-label="Изменить">✎</button></div>`, "pls")).join("") +
       (all.length ? `<p class="muted" style="font-size:12px">Изменить — ✎, удалить — свайп влево по месту.</p>` : `<p class="muted">Пока пусто — добавьте отель, вокзал или любое место.</p>`) +
       `<button class="btn yes big" data-a="add">+ Добавить место</button>`;
@@ -947,10 +952,10 @@ function drawPlaces() {
   box.onclick = e => {
     const pi = e.target.closest("[data-p]");
     if (pi) { const p = all[+pi.dataset.p], list = store.get("places", []), x = list.find(q => q.id === p.id); if (x) { x.t = Date.now(); store.set("places", list); }
-      const cs = all.map(placeCard); return openFull(cs[+pi.dataset.p], cs, +pi.dataset.p); }
+      const cs = all.map(p => placeCard(p, placeMode)); return openFull(cs[+pi.dataset.p], cs, +pi.dataset.p); }
     const pe = e.target.closest("[data-e]"); if (pe) return openPlaceEdit({...all[+pe.dataset.e]});
     const a = e.target.closest("[data-a]"); if (!a) return; const k = a.dataset.a;
-    if (k === "map") { const c = {...DATA.show.find(x => x.id === "taxi"), id: "show:taxi"}; return openFull(c, [c], 0); }
+    if (k === "map") { const sid = placeMode === "walk" ? "walk" : "taxi", c = {...DATA.show.find(x => x.id === sid), id: "show:" + sid}; return openFull(c, [c], 0); }
     if (k === "add") return openPlaceEdit({});
     if (k === "cancel") return closePlaceEdit();
     if (k === "save") {
@@ -1072,8 +1077,8 @@ function drawHomeRes() {
   $("hres").innerHTML = h;
 }
 // ---- главная: кнопки (cn:quick) и порядок блоков (cn:homeLayout)
-const ICON = {taxi: "🗺", nochinese: "🗣", help: "🆘", checkin: "🏨", train: "🚆", food: "🍜", bag: "🧳"};
-const DEF_QUICK = [{k: "taxi"}, {k: "show", id: "nochinese"}, {k: "show", id: "help"}];
+const ICON = {taxi: "🗺", walk: "🧭", nochinese: "🗣", help: "🆘", checkin: "🏨", train: "🚆", food: "🍜", bag: "🧳"};
+const DEF_QUICK = [{k: "walk"}, {k: "show", id: "nochinese"}, {k: "show", id: "help"}];
 const BLOCKS = {quick: "Кнопки", fav: "Избранное", recent: "Недавние"};  // «Разделы» (ред. ≤11) — теперь вкладка «Словарь»
 const quick = () => store.get("quick", DEF_QUICK);
 const layout = () => {
@@ -1081,10 +1086,11 @@ const layout = () => {
   let off = (l.off || []).filter(b => BLOCKS[b]); if (order.every(b => off.includes(b))) off = off.filter(b => b !== order[0]);  // хотя бы один блок виден
   return {order, off};
 };
-const qKey = q => q.k === "taxi" ? "taxi" : q.k === "card" ? "card:" + q.c.id : q.k + ":" + q.id;
+const qKey = q => q.k === "taxi" || q.k === "walk" ? q.k : q.k === "card" ? "card:" + q.c.id : q.k === "place" && q.m === "walk" ? "walk:" + q.id : q.k + ":" + q.id;
 function qFromCard(c) {
   const id = String(c.id || "");
   if (id.startsWith("place:")) return {k: "place", id: id.slice(6)};
+  if (id.startsWith("walk:")) return {k: "place", id: id.slice(5), m: "walk"};
   if (id.startsWith("show:")) return {k: "show", id: id.slice(5)};
   const lines = [].concat(c.lines || c.zh);
   return {k: "card", c: {id: favId({...c, zh: lines}), zh: lines, py: c.py || "", cy: c.cy || "", ru: c.ru || ""}};
@@ -1096,14 +1102,15 @@ function togglePin(c) {
 }
 function qResolve(q) {  // → {icon, label, card?} или null, если источник удалён
   if (q.k === "taxi") return {icon: "🚕", label: "Такси"};
-  if (q.k === "place") { const p = places().find(x => x.id === q.id); return p ? {icon: "📍", label: p.name || "Место", card: placeCard(p)} : null; }
-  if (q.k === "show") { const c = DATA.show.find(x => x.id === q.id); return c ? {icon: ICON[c.id] || "💬", label: c.title.replace(/^Такси → /, "Такси: "), card: {...c, id: "show:" + c.id}} : null; }
+  if (q.k === "walk") return {icon: "🚶", label: "Как пройти"};
+  if (q.k === "place") { const p = places().find(x => x.id === q.id); return p ? {icon: q.m === "walk" ? "🚶" : "📍", label: p.name || "Место", card: placeCard(p, q.m)} : null; }
+  if (q.k === "show") { const c = DATA.show.find(x => x.id === q.id); return c ? {icon: ICON[c.id] || "💬", label: c.title.replace(/^(Такси|Как пройти) → /, "$1: "), card: {...c, id: "show:" + c.id}} : null; }
   const ru = q.c.ru.replace(/\s*\(.*?\)\s*/g, " ").trim();
   return {icon: "💬", label: ru.length > 24 ? ru.slice(0, 22) + "…" : ru, card: {...q.c, lines: q.c.zh, zh: q.c.zh}};
 }
 function openQuick(i) {
   const q = quick()[i]; if (!q) return;
-  if (q.k === "taxi") { placeEdit = null; return go("places"); }
+  if (q.k === "taxi" || q.k === "walk") { placeEdit = null; placeMode = q.k; return go("places"); }
   const r = qResolve(q); if (r && r.card) openFull(r.card, [r.card], 0);
 }
 let homeEdit = false;
@@ -1114,14 +1121,14 @@ function drawHomeEdit() {
     return `<div class="erow"><label class="t"><input type="checkbox" data-blk="${b}"${on ? " checked" : ""}${on && onN === 1 ? " disabled" : ""}> ${BLOCKS[b]}</label>${mv("b", i, L.order.length)}</div>`; }).join("");
   h += `<h2>Кнопки</h2>` + (q.length ? q.map((x, i) => { const r = qResolve(x); return `<div class="erow"><div class="t">${r ? r.icon + " " + esc(r.label) : "<span class='muted'>удалено</span>"}</div>${mv("q", i, q.length)}<button class="mv" data-qdel="${i}" aria-label="Убрать">✕</button></div>`; }).join("") : `<p class="muted">Кнопок нет.</p>`);
   const have = new Set(q.map(qKey));
-  const opts = [[`taxi`, "🚕 Такси — выбор места"], ...places().filter(p => !have.has("place:" + p.id)).map(p => ["place:" + p.id, "📍 Такси: " + p.name]),
+  const opts = [["walk", "🚶 Как пройти — выбор места"], ["taxi", "🚕 Такси — выбор места"], ...places().map(p => ["walk:" + p.id, "🚶 Как пройти: " + p.name]), ...places().map(p => ["place:" + p.id, "📍 Такси: " + p.name]),
     ...DATA.show.filter(c => !have.has("show:" + c.id)).map(c => ["show:" + c.id, (ICON[c.id] || "💬") + " " + c.title])].filter(([k]) => !have.has(k));
   if (opts.length) h += `<div class="erow"><select id="qadd"><option value="">+ Добавить кнопку…</option>${opts.map(([k, t]) => `<option value="${esc(k)}">${esc(t)}</option>`).join("")}</select></div>`;
   h += `<p class="muted">Любую фразу можно сделать кнопкой: откройте её крупно и нажмите 📌.</p>`;
   h += `<div class="row"><button class="btn" data-he="reset">Как было</button><button class="btn yes" data-he="done">Готово</button></div>`;
   $("hbody").innerHTML = h;
   $("qadd") && ($("qadd").onchange = e => { const v = e.target.value; if (!v) return; const [k, ...rest] = v.split(":"); const id = rest.join(":");
-    store.set("quick", [...quick(), k === "taxi" ? {k: "taxi"} : {k, id}]); drawHomeEdit(); });
+    store.set("quick", [...quick(), k === "taxi" || (k === "walk" && !id) ? {k} : k === "walk" ? {k: "place", id, m: "walk"} : {k, id}]); drawHomeEdit(); });
 }
 function homeEditClick(e) {
   const m = e.target.closest("[data-mv]");
@@ -1247,7 +1254,7 @@ function drawSettings() {
     if (k === "upd") { $("updst").textContent = navigator.onLine ? "Проверяю…" : "Нет интернета."; if (swReg && navigator.onLine) swReg.update().then(() => { setTimeout(() => { if ($("updst")) $("updst").textContent = $("upd").classList.contains("hide") ? "Установлена последняя версия." : "Есть новая версия — нажмите «Обновить» внизу."; }, 2500); }).catch(() => { $("updst").textContent = "Не удалось проверить."; }); }
     if (k === "vtest") say("你好，我们是俄罗斯人。");
     if (k === "hard") hardRefresh();
-    const CLR = {"clr-recent": [["recent"], "Очистить недавние?"], "clr-places": [["places", "trips"], "Удалить все мои места? Кнопки такси к конкретным местам тоже пропадут."],
+    const CLR = {"clr-recent": [["recent"], "Очистить недавние?"], "clr-places": [["places", "trips"], "Удалить все мои места? Кнопки к конкретным местам тоже пропадут."],
       "clr-home": [["quick", "homeLayout"], "Вернуть кнопки и порядок блоков главной как было?"], "clr-hidden": [["hidden"], "Вернуть все скрытые карточки?"],
       "clr-favs": [["favs"], "Очистить избранное (и вкладку «Показать»)?"]};
     if (CLR[k] && confirm(CLR[k][1])) { for (const key of CLR[k][0]) localStorage.removeItem("cn:" + key);
@@ -1285,7 +1292,7 @@ async function hardRefresh() {
 const FAQ = [
   ["Как быстро найти фразу", `<p>Пишите в поиск на главной: по-русски («вода»), pinyin без тонов («shui»), кириллицей («шуэй») или иероглифами. Нажмите фразу — она откроется крупно: иероглифы, pinyin, кириллица «как слышится», перевод и 🔊.</p><p>Весь разговорник по разделам — вкладка «Словарь» (разделы по алфавиту, внутри — поиск по разделу).</p><p>Нет нужной фразы — внизу результатов «Спросить Claude»: ответ сохраняется в «Мои фразы» и дальше работает без интернета.</p>`],
   ["Как показать фразу собеседнику", `<p>Нажмите фразу — откроется крупно на белом фоне. A+ / A− — размер, «Поворот» — горизонтально, свайп — соседние фразы. Пока карточка открыта, экран не гаснет (на iPhone с iOS 18.4 и новее).</p>`],
-  ["Такси: свои адреса", `<p>Кнопка «Такси» на главной → список мест. «+ Добавить место»: название по-русски для себя, название и адрес иероглифами (скопируйте из подтверждения брони или карты, или попросите на ресепшн написать). Нажали место — карточка для водителя с адресом.</p><p>Нет адреса — «Покажу на карте»: фраза «отвезите сюда, покажу на карте».</p><p>Править — кнопка ✎ справа, удалить — свайп влево по месту → «Удалить».</p>`],
+  ["Как пройти и такси: свои адреса", `<p>Кнопка «Как пройти» на главной → список мест → карточка для прохожего «Скажите, как пройти сюда?» с названием и адресом. Такси — «Ещё → Мои места» (карточка для водителя); кнопку «Такси» можно вернуть на главную через «⚙ Настроить главную».</p><p>«+ Добавить место»: название по-русски для себя, название и адрес иероглифами (скопируйте из подтверждения брони или карты, или попросите на ресепшн написать). Нажали место — карточка для водителя с адресом.</p><p>Нет адреса — «Покажу на карте»: «как пройти сюда?» или «отвезите сюда» плюс «покажу на карте».</p><p>Править — кнопка ✎ справа, удалить — свайп влево по месту → «Удалить».</p>`],
   ["Как настроить главную", `<p>Внизу главной — «⚙ Настроить главную»: какие блоки показывать (кнопки, избранное, недавние) и в каком порядке, какие кнопки наверху. Один блок всегда остаётся. Разделы фраз — во вкладке «Словарь».</p><p>Любую фразу или место можно сделать кнопкой: откройте крупно и нажмите 📌. Нажмите 📌 ещё раз — кнопка уберётся.</p>`],
   ["Что во вкладке «Показать»", `<p>Только ваше избранное. Нажмите ☆ на фразе (в поиске, Словаре, при показе крупно) — она появится там и в блоке «Избранное» на главной. Пустое избранное — на главной кнопка «＋ Добавить в избранное», она откроет Словарь.</p>`],
   ["Жесты", `<ul><li><b>Назад</b> — свайп от самого левого края экрана вправо (как в приложениях iOS) или кнопка «‹ …» сверху.</li><li><b>Удалить</b> из избранного, недавних или моих мест — свайп по строке влево → «Удалить».</li><li><b>Показ крупно</b> — свайп влево / вправо листает соседние фразы.</li><li><b>Карточки</b> — свайп влево — дальше, вправо — назад.</li><li>Двойной тап страницу не увеличивает; если нужно крупнее — A+ в показе крупно.</li></ul>`],
@@ -1295,7 +1302,7 @@ const FAQ = [
   ["Как обновить приложение", `<p>При интернете новая версия скачивается сама — внизу появится «Доступна новая версия → Обновить». Вручную: «Ещё → Настройки → Проверить сейчас». Если не помогает или что-то сломалось — «Переустановить офлайн-файлы» (данные сохранятся, нужен интернет).</p>`],
   ["Работает ли без интернета", `<p>Да, всё, кроме «Спросить Claude». Нужно один раз открыть приложение с иконки на экране «Домой» при интернете. Индикатор «онлайн / офлайн» — справа вверху главной.</p>`],
   ["Как установить на iPhone", `<p>Откройте сайт в Safari → «Поделиться» → «На экран „Домой“». Дальше запускайте с иконки.</p>`],
-  ["Старые или лишние данные (например, чужой отель в местах)", `<p>Одно место — «Такси» → свайп влево по месту или ✎ → «Удалить место». Всё сразу — «Ещё → Настройки → Сброс данных»: недавние, мои места, главная, скрытые карточки, избранное или все данные.</p>`],
+  ["Старые или лишние данные (например, чужой отель в местах)", `<p>Одно место — «Ещё → Мои места» → свайп влево по месту или ✎ → «Удалить место». Всё сразу — «Ещё → Настройки → Сброс данных»: недавние, мои места, главная, скрытые карточки, избранное или все данные.</p>`],
   ["Резервная копия и новый телефон", `<p>Все данные хранятся только на этом устройстве. «Ещё → Настройки → Сохранить копию» — файл в «Файлы»; на новом телефоне — «Восстановить».</p>`],
   ["Кириллица и тоны", `<p>Кириллица — приблизительное звучание, без тонов. Тон показан в pinyin значком над гласной (ā á ǎ à). Правила чтения — «Ещё → Слоги». Если сомневаетесь — просто покажите карточку.</p>`],
 ];
@@ -1306,8 +1313,12 @@ function drawFaq() {
 }
 
 // ---- вводный гайд (первый запуск) и «Что нового» (после обновления)
-const APP_REV = 13;  // номер редакции; cn:ver — последняя редакция, которую видел пользователь (до ред. 12 не хранилась → 11)
+const APP_REV = 14;  // номер редакции; cn:ver — последняя редакция, которую видел пользователь (до ред. 12 не хранилась → 11)
 const CHANGES = [
+  {rev: 14, date: "23.10.2026", items: [
+    "Главная: кнопка «Как пройти» вместо «Такси». Выберите место из «Моих мест» — откроется карточка для прохожего «Скажите, как пройти сюда?» с адресом иероглифами.",
+    "«Такси» осталось в «Ещё → Мои места». Вернуть кнопку на главную — «⚙ Настроить главную → + Добавить кнопку».",
+  ]},
   {rev: 13, date: "22.10.2026", items: [
     "«Еда»: как попросить меню и барную карту, виски, бурбон, Jim Beam.",
     "«Количество»: 一杯 (порция) и 一个杯子 (бокал), двойная порция, «две порции в один бокал».",
@@ -1324,9 +1335,9 @@ const CHANGES = [
 ];
 const INTRO = [
   {big: "你好", h: "Помощник по фразам для поездки в Китай", body: `<p>Нужная фраза за пару секунд: иероглифы, pinyin, произношение кириллицей «как слышится» и перевод.</p><p>Покажите фразу собеседнику крупно или включите озвучку. Немного поучиться — тоже здесь: карточки и уроки.</p><p>Работает без интернета. Ваши данные хранятся только на этом телефоне.</p>`},
-  {big: "🔎", h: "Главная", body: `<ul><li><b>Поиск</b> — по-русски, pinyin без тонов, кириллицей или иероглифами.</li><li><b>Кнопки</b> сверху — Такси, «Не говорю», «Помощь». Свои — через «⚙ Настроить главную» или 📌 у любой фразы.</li><li><b>★ Избранное</b> — то, что нужно часто. ＋ — добавить.</li><li><b>Недавние</b> — последние открытые фразы.</li></ul>`},
+  {big: "🔎", h: "Главная", body: `<ul><li><b>Поиск</b> — по-русски, pinyin без тонов, кириллицей или иероглифами.</li><li><b>Кнопки</b> сверху — «Как пройти», «Не говорю», «Помощь». Свои — через «⚙ Настроить главную» или 📌 у любой фразы.</li><li><b>★ Избранное</b> — то, что нужно часто. ＋ — добавить.</li><li><b>Недавние</b> — последние открытые фразы.</li></ul>`},
   {big: "A+", h: "Показ крупно", body: `<p>Нажмите фразу — она откроется на весь экран для собеседника.</p><ul><li>A− / A+ — размер, ⟳ — поворот</li><li>🔊 — озвучка (в беззвучном режиме iPhone молчит)</li><li>☆ — в избранное, 📌 — кнопкой на главную</li><li>свайп — соседняя фраза</li></ul>`},
-  {big: "词", h: "Нижняя панель", body: `<ul><li><b>Словарь</b> — все разделы по алфавиту.</li><li><b>Показать</b> — избранное карточками.</li><li><b>Ещё</b> — Мои места (адреса для такси), Карточки, Уроки, Справка, Настройки, Помощь.</li></ul><p>Назад — свайп от левого края экрана. Удалить строку — свайп по ней влево.</p>`},
+  {big: "词", h: "Нижняя панель", body: `<ul><li><b>Словарь</b> — все разделы по алфавиту.</li><li><b>Показать</b> — избранное карточками.</li><li><b>Ещё</b> — Мои места (адреса для такси и прохожих), Карточки, Уроки, Справка, Настройки, Помощь.</li></ul><p>Назад — свайп от левого края экрана. Удалить строку — свайп по ней влево.</p>`},
 ];
 let introI = 0, introDone = null;
 function overlayOpen() { if ($("intro").classList.contains("hide")) { $("intro").classList.remove("hide"); navPush(overlayCloseNow); } }
@@ -1359,6 +1370,10 @@ function startupNotes() {
     store.set("onboarded", 1);  // приложением уже пользовались до ред. 12 — гайд не показываем
   }
   const seen = store.get("ver", 11);
+  if (seen < 14) {  // ред. 14: кнопка «Как пройти» заменяет «Такси» и в сохранённых кнопках (вернуть — «⚙ Настроить главную»)
+    const q = store.get("quick", null);
+    if (q && !q.some(x => x.k === "walk")) store.set("quick", q.map(x => x.k === "taxi" ? {k: "walk"} : x));
+  }
   if (seen < APP_REV) { store.set("ver", APP_REV); showNews(seen); }
 }
 
