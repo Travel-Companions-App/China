@@ -107,6 +107,7 @@ h2{font-size:13px;color:var(--acc);margin:20px 0 2px;text-transform:uppercase;le
 .ritem .zh{font-size:22px}
 .ritem .m{font-size:14px}
 .rlink{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line);background:none;color:var(--fg);font:inherit;padding:12px 0}
+.rmore{display:block;width:100%;border:0;border-bottom:1px solid var(--line);background:none;color:var(--cy);font:inherit;font-size:15px;padding:10px 0;text-align:left}
 .rlink small{display:block;color:var(--muted);font-size:13px}
 #upd{position:fixed;left:12px;right:12px;bottom:calc(72px + env(safe-area-inset-bottom));z-index:15;background:var(--fg);color:var(--bg);border-radius:14px;padding:12px 14px;display:flex;gap:10px;align-items:center;font-size:15px;box-shadow:0 6px 24px rgba(0,0,0,.25)}
 #upd span{flex:1}
@@ -426,7 +427,7 @@ const TABS = ["home", "dict", "show", "more"];
 const PARENT = {list: "dict", learn: "more", quiz: "more", syl: "more", places: "more", set: "more", my: "more", les: "more", gd: "more", faq: "more"};
 const tabOf = v => PARENT[v] || v;
 function go(v, keep, nav) {
-  if (v === view && v === "home" && !keep) { homeQ = ""; homeEdit = false; }
+  if (v === view && v === "home" && !keep) { homeQ = ""; homeOpen.clear(); homeEdit = false; }
   const prev = view;
   if (v !== prev) { if (v === "les") lesState = null; if (v === "gd") gdOpen = null; if (v === "places") placeEdit = null; }
   if (tabOf(v) !== "dict") dictHint = false;
@@ -1068,16 +1069,19 @@ function searchAll(raw) {
     les: DATA.lessons.filter(l => hit(l.title, l.goal)),
   };
 }
-let homeRes = [];
+let homeRes = [], homeOpen = new Set();  // homeOpen — блоки поиска, раскрытые «Показать больше» (сброс при новом запросе)
+const RES_LIM = 3;  // ред. 18: по 3 результата в блоке, чтобы на экране были видны все блоки
+const cut = (k, xs) => homeOpen.has(k) ? xs : xs.slice(0, RES_LIM);
+const moreBtn = (k, n) => !homeOpen.has(k) && n > RES_LIM ? `<button class="rmore" data-more="${k}">Показать больше (${n - RES_LIM})</button>` : "";
 function drawHomeRes() {
   const r = searchAll(homeQ); homeRes = r.ph;
   let h = "";
   if (r.ph.length) {
-    h += `<h2>Фразы и вывески</h2>` + r.ph.map((c, i) => `<div class="ritem" data-ri="${i}"><div class="t"><div class="zh">${esc(c.zh)}</div><div class="m"><span class="py">${esc(c.py || "")}</span> · <span class="cy">${esc(c.cy || "")}</span></div><div class="m">${esc(c.ru)} <span class="muted">· ${esc(c.deck)}</span></div></div><button class="fav${isFav(c) ? " on" : ""}" data-fv="${i}">${isFav(c) ? "★" : "☆"}</button></div>`).join("");
-    if (r.more) h += `<p class="muted">…и ещё ${r.more}. Уточните запрос.</p>`;
+    h += `<h2>Фразы и вывески</h2>` + cut("ph", r.ph).map((c, i) => `<div class="ritem" data-ri="${i}"><div class="t"><div class="zh">${esc(c.zh)}</div><div class="m"><span class="py">${esc(c.py || "")}</span> · <span class="cy">${esc(c.cy || "")}</span></div><div class="m">${esc(c.ru)} <span class="muted">· ${esc(c.deck)}</span></div></div><button class="fav${isFav(c) ? " on" : ""}" data-fv="${i}">${isFav(c) ? "★" : "☆"}</button></div>`).join("") + moreBtn("ph", r.ph.length);
+    if (r.more && homeOpen.has("ph")) h += `<p class="muted">…и ещё ${r.more}. Уточните запрос.</p>`;
   }
-  if (r.gd.length) h += `<h2>Справка</h2>` + r.gd.map(x => `<button class="rlink" data-go-gd="${x.i}">${esc(x.g.title)}</button>`).join("");
-  if (r.les.length) h += `<h2>Уроки</h2>` + r.les.map(l => `<button class="rlink" data-go-les="${l.n}">Урок ${l.n}. ${esc(l.title)}<small>${esc(l.goal)}</small></button>`).join("");
+  if (r.gd.length) h += `<h2>Справка</h2>` + cut("gd", r.gd).map(x => `<button class="rlink" data-go-gd="${x.i}">${esc(x.g.title)}</button>`).join("") + moreBtn("gd", r.gd.length);
+  if (r.les.length) h += `<h2>Уроки</h2>` + cut("les", r.les).map(l => `<button class="rlink" data-go-les="${l.n}">Урок ${l.n}. ${esc(l.title)}<small>${esc(l.goal)}</small></button>`).join("") + moreBtn("les", r.les.length);
   if (!h) h = `<p class="muted" style="margin-top:14px">Ничего не найдено. Ищите по-русски, pinyin (можно без тонов), кириллицей или иероглифами.</p>`;
   h += `<button class="blk" data-ask="1" style="margin-top:14px"><div class="lbl">Нет нужной фразы?</div><div class="big2">Спросить Claude: «${esc(homeQ.trim())}»</div><div class="muted">Ответ сохраните в «Мои фразы» — будет работать офлайн</div></button>`;
   $("hres").innerHTML = h;
@@ -1168,7 +1172,7 @@ function drawHome() {
     box.innerHTML = `<div class="hero"><h1><span>你好</span> · Китайский</h1><span class="net" id="net"><i></i></span></div>
       <input type="search" id="hq" placeholder="Найти: «вода», «shui», «туалет», 水…" autocomplete="off" enterkeyhint="search" style="margin-top:10px">
       <div id="hres" class="res"></div><div id="hbody"></div>`;
-    $("hq").oninput = () => { homeQ = $("hq").value; drawHome(); };
+    $("hq").oninput = () => { homeQ = $("hq").value; homeOpen.clear(); drawHome(); };
     box.onclick = e => {
       if (e.target.closest(".say")) return;
       if (homeEdit && !homeQ.trim() && homeEditClick(e) !== true) return;
@@ -1176,6 +1180,7 @@ function drawHome() {
       const f = e.target.closest("[data-fv]"); if (f) { const on = toggleFav(homeRes[+f.dataset.fv]); f.classList.toggle("on", on); f.textContent = on ? "★" : "☆"; return; }
       const ri = e.target.closest("[data-ri]"); if (ri) return openFull(homeRes[+ri.dataset.ri], homeRes, +ri.dataset.ri);
       const hr = e.target.closest("[data-hr]"); if (hr) { const [list, i] = homeRows[+hr.dataset.hr]; return openFull(list[i], list, i); }
+      const mo = e.target.closest("[data-more]"); if (mo) { homeOpen.add(mo.dataset.more); return drawHomeRes(); }
       const g = e.target.closest("[data-go-gd]"); if (g) { go("gd"); return openGuideIn(+g.dataset.goGd); }
       const l = e.target.closest("[data-go-les]"); if (l) return openLesson(+l.dataset.goLes);
       if (e.target.closest("[data-ask]")) { myAsk = homeQ.trim(); myParsed = null; return go("my"); }
@@ -1300,7 +1305,7 @@ async function hardRefresh() {
 
 // ---- помощь и FAQ
 const FAQ = [
-  ["Как быстро найти фразу", `<p>Пишите в поиск на главной: по-русски («вода»), pinyin без тонов («shui»), кириллицей («шуэй») или иероглифами. Нажмите фразу — она откроется крупно: иероглифы, pinyin, кириллица «как слышится», перевод и 🔊.</p><p>Весь разговорник по разделам — вкладка «Словарь» (разделы по алфавиту, внутри — поиск по разделу).</p><p>Нет нужной фразы — внизу результатов «Спросить Claude»: ответ сохраняется в «Мои фразы» и дальше работает без интернета.</p>`],
+  ["Как быстро найти фразу", `<p>Пишите в поиск на главной: по-русски («вода»), pinyin без тонов («shui»), кириллицей («шуэй») или иероглифами. Нажмите фразу — она откроется крупно: иероглифы, pinyin, кириллица «как слышится», перевод и 🔊.</p><p>В каждом блоке результатов (фразы, справка, уроки) сначала видно 3 — остальные под кнопкой «Показать больше».</p><p>Весь разговорник по разделам — вкладка «Словарь» (разделы по алфавиту, внутри — поиск по разделу).</p><p>Нет нужной фразы — внизу результатов «Спросить Claude»: ответ сохраняется в «Мои фразы» и дальше работает без интернета.</p>`],
   ["Как показать фразу собеседнику", `<p>Нажмите фразу — откроется крупно на белом фоне. A+ / A− — размер, «Поворот» — горизонтально, свайп — соседние фразы. Пока карточка открыта, экран не гаснет (на iPhone с iOS 18.4 и новее).</p>`],
   ["Как пройти и такси: свои адреса", `<p>Кнопка «Как пройти» на главной → список мест → карточка для прохожего «Скажите, как пройти сюда?» с названием и адресом. Такси — «Ещё → Мои места» (карточка для водителя); кнопку «Такси» можно вернуть на главную через «⚙ Настроить главную».</p><p>«+ Добавить место»: название по-русски для себя, название и адрес иероглифами (скопируйте из подтверждения брони или карты, или попросите на ресепшн написать). Нажали место — карточка для водителя с адресом.</p><p>Нет адреса — «Покажу на карте»: «как пройти сюда?» или «отвезите сюда» плюс «покажу на карте».</p><p>Править — кнопка ✎ справа, удалить — свайп влево по месту → «Удалить».</p>`],
   ["Как настроить главную", `<p>Внизу главной — «⚙ Настроить главную»: какие блоки показывать (кнопки, недавние, избранное) и в каком порядке, какие кнопки наверху. Один блок всегда остаётся. Избранное на главной по умолчанию выключено — оно во вкладке «Избранное». Разделы фраз — во вкладке «Словарь».</p><p>Любую фразу или место можно сделать кнопкой: откройте крупно и нажмите «📌 На главную» вверху экрана. Нажмите ещё раз («📌 На главной») — кнопка уберётся.</p>`],
@@ -1323,8 +1328,11 @@ function drawFaq() {
 }
 
 // ---- вводный гайд (первый запуск) и «Что нового» (после обновления)
-const APP_REV = 15;  // номер редакции; cn:ver — последняя редакция, которую видел пользователь (до ред. 12 не хранилась → 11)
+const APP_REV = 16;  // номер редакции; cn:ver — последняя редакция, которую видел пользователь (до ред. 12 не хранилась → 11)
 const CHANGES = [
+  {rev: 16, date: "23.10.2026", items: [
+    "Поиск на главной: в каждом блоке (фразы, справка, уроки) сначала по 3 результата, остальные — кнопкой «Показать больше». Все блоки видны без прокрутки.",
+  ]},
   {rev: 15, date: "23.10.2026", items: [
     "Вкладка «Показать» теперь называется «Избранное». С главной блок избранного убран — вернуть: «⚙ Настроить главную» → галочка «Избранное».",
     "Своя кнопка на главной — «📌 На главную» вверху показа крупно; после нажатия видно, что кнопка добавлена.",
