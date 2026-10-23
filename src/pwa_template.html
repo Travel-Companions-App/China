@@ -446,7 +446,7 @@ function placeCard(p, m) {  // m: "walk" — «Как пройти → мест�
   const T = DATA.place, nm = p.name || "это место", note = p.note ? " (" + p.note + ")" : "";
   if (m === "walk") return {id: "walk:" + p.id, title: "Как пройти → " + (p.name || "место"),
     zh: [T.walk[0], p.zh, p.addr].filter(Boolean),
-    py: T.walk[1], cy: T.walk[2], ru: "Скажите, пожалуйста, как пройти сюда: " + nm + note + ". [из памяти]"};
+    py: T.walk[1], cy: T.walk[2], ru: "Скажите, пожалуйста, как пройти сюда: " + nm + note + "."};
   return {id: "place:" + p.id, title: "Такси → " + (p.name || "место"),
     zh: [T.taxi[0], p.zh, p.addr, p.phone ? T.phone + p.phone : ""].filter(Boolean),
     py: T.taxi[1], cy: T.taxi[2], ru: "Водитель, отвезите нас, пожалуйста, сюда: " + (p.name || "это место") + (p.note ? " (" + p.note + ")" : "") + "."};
