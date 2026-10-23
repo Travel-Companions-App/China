@@ -30,6 +30,10 @@ print("уроков:", len(LESSONS), "| статей:", len(GUIDE), "| ошиб�
 # латиница без тонов из заглавных (B口, WiFi) — не pinyin
 bad = {w for p in items for w in re.findall(r"[A-Za-zÀ-ɏüÜ']+", p) if word_cyr(w) is None and not re.fullmatch(r"[A-Z]+|WiFi", w)}
 print("pinyin без разбора на слоги:", bad or "нет"); ok &= not bad
+from words import WORDS
+from glossary import check as gloss_check
+gerr = gloss_check(WORDS)
+print("пословный словарь:", len(WORDS), "слов | ошибки:", gerr[:5] or "нет"); ok &= not gerr
 import json
 for f in ["index.html", "diag.html"]:
     page = open(os.path.join(OUT, f), encoding="utf-8").read()

@@ -45,12 +45,14 @@ def lesson_json(l):
         ex.append(e)
     return dict(l, theory=th, ex=ex)
 
+from words import WORDS
+words = {w: [py, to_cyr(py), ru, note] for w, (py, ru, note) in WORDS.items()}
 guide = [dict(g, phrases=[[z, p, to_cyr(p), r] for z, p, r in g["phrases"]]) for g in GUIDE]
 SITE = "https://travel-companions-app.github.io/China/"
 place = {k: [v[0], v[1], to_cyr(v[1])] if isinstance(v, tuple) else v for k, v in PLACE_CARD.items()}
 data = {"phrases": ph, "signs": signs, "stations": st, "show": show, "tips": TIPS, "syllables": syl,
         "lessons": [lesson_json(l) for l in LESSONS],
-        "guide": guide, "checked": CHECKED, "place": place}
+        "guide": guide, "checked": CHECKED, "place": place, "words": words}
 tpl = open(os.path.join(SRC, "pwa_template.html"), encoding="utf-8").read()
 # версия = хеш шаблона и данных; дата сборки — дата последнего изменения контента (стабильна при пересборке без правок)
 body = json.dumps(data, ensure_ascii=False, sort_keys=True)

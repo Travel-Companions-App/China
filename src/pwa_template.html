@@ -81,6 +81,15 @@ h2{font-size:13px;color:var(--acc);margin:20px 0 2px;text-transform:uppercase;le
 #full .fbot .fb{flex:1;padding:12px 6px}
 #full .fb.on{background:#ffe08a}
 #full .fpos{font-size:13px;color:#777}
+#full .zh .w{cursor:pointer;margin:0 .05em;text-decoration:underline dotted #c4c4c4;text-decoration-thickness:2px;text-underline-offset:.16em;border-radius:6px}
+#full .zh .w.sel{background:#ffe08a;text-decoration-color:transparent}
+#full .wpop{position:absolute;left:12px;right:12px;bottom:calc(74px + env(safe-area-inset-bottom));background:#fff;border:1px solid #ddd;border-radius:16px;box-shadow:0 6px 24px rgba(0,0,0,.18);padding:12px 14px 14px 16px;z-index:3;max-height:45vh;overflow:auto}
+#full .wpop .wh{display:flex;align-items:center;gap:10px}
+#full .wpop .wz{font-size:32px;line-height:1.2;flex:1}
+#full .wpop .wpy{color:#555;font-size:16px;margin-top:2px}
+#full .wpop .wcy{color:#1f5f8b;font-size:17px}
+#full .wpop .wru{font-size:18px;margin-top:6px}
+#full .wpop .wn{color:#666;font-size:14px;margin-top:6px}
 .fav{border:0;background:none;font-size:20px;color:var(--muted);width:40px;height:40px;flex:none;padding:0}
 .fav.on{color:#e0a000}
 .home{padding-top:8px}
@@ -490,9 +499,32 @@ function addRecent(c) {
 function openFull(c, list, i) {
   list = list && list.length ? list : [c]; i = list && list.length ? (i || 0) : 0;
   try { addRecent(list[i]); } catch {}
-  fullS = {list, i, fz: store.get("fz", 1), rot: false};
+  fullS = {list, i, fz: store.get("fz", 1), rot: false, wi: null, wk: null};
   $("full").classList.remove("hide"); drawFull(); lockScreen();
   navPush(closeFullNow);
+}
+// ---- пословный перевод: самое длинное слово словаря слева направо (как glossary.seg в Python)
+const HANC = /[\u3400-\u9fff]/, WMAX = Math.max(1, ...Object.keys(DATA.words).map(w => w.length));
+function segWords(t) {
+  const out = []; let i = 0;
+  while (i < t.length) {
+    if (HANC.test(t[i])) {
+      let L = Math.min(WMAX, t.length - i);
+      while (L > 0 && !DATA.words[t.substr(i, L)]) L--;
+      if (L) { out.push([t.substr(i, L), true]); i += L; } else { out.push([t[i], false]); i++; }
+    } else { let j = i; while (j < t.length && !HANC.test(t[j])) j++; out.push([t.slice(i, j), null]); i = j; }
+  }
+  return out;
+}
+function zhWords(lines, sel) {
+  let k = 0;
+  return lines.map(l => segWords(l).map(([p, ok]) => ok ? `<span class="w${k === sel ? " sel" : ""}" data-wi="${k++}" data-wk="${esc(p)}">${esc(p)}</span>` : esc(p)).join("")).join("<br>");
+}
+function wordPop(w) {
+  const [py, cy, ru, note] = DATA.words[w] || [];
+  if (!ru) return "";
+  return `<div class="wpop"><div class="wh"><div class="wz">${esc(w)}</div><button class="fb" data-f="wsay">🔊</button><button class="fb" data-f="wclose">✕</button></div>
+    <div class="wpy">${esc(py)}</div><div class="wcy">${esc(cy)}</div><div class="wru">${esc(ru)}</div>${note ? `<div class="wn">${esc(note)}</div>` : ""}</div>`;
 }
 function closeFull() { if (!fullS) return; if (!navBack()) closeFullNow(); }
 function closeFullNow() { if (!fullS) return; $("full").classList.add("hide"); $("full").classList.remove("rot"); fullS = null; unlockScreen(); try { speechSynthesis.cancel(); } catch {} if (view === "home" || view === "list" || view === "show" || view === "places") render(); }
@@ -500,23 +532,31 @@ function drawFull() {
   const S = fullS, c = S.list[S.i], lines = [].concat(c.lines || c.zh), F = $("full");
   F.style.setProperty("--fz", S.fz); F.classList.toggle("rot", S.rot);
   F.innerHTML = `<div class="ftop"><button class="fb" data-f="close">✕</button><span class="fpos">${S.list.length > 1 ? (S.i + 1) + " / " + S.list.length : ""}</span><span style="display:flex;gap:8px"><button class="fb${isPinned(c) ? " on" : ""}" data-f="pin">${isPinned(c) ? "📌 На главной" : "📌 На главную"}</button><button class="fb${isFav(c) ? " on" : ""}" data-f="fav">${isFav(c) ? "★" : "☆"}</button></span></div>
-    <div class="fbody"><div class="zh">${lines.map(esc).join("<br>")}</div>
+    <div class="fbody"><div class="zh">${S.rot ? lines.map(esc).join("<br>") : zhWords(lines, S.wi)}</div>
     <div class="s">${esc(c.py || "")}</div><div class="cy2">${esc(c.cy || "")}</div><div class="s">${esc(c.ru || "")}</div></div>
+    ${S.wi != null && !S.rot ? wordPop(S.wk) : ""}
     <div class="fbot"><button class="fb" data-f="minus">A−</button><button class="fb" data-f="plus">A+</button><button class="fb${S.rot ? " on" : ""}" data-f="rot">⟳ Поворот</button><button class="fb" data-f="say">🔊</button></div>`;
 }
 $("full").onclick = e => {
-  const b = e.target.closest("[data-f]"); if (!b || !fullS) return; const k = b.dataset.f, c = fullS.list[fullS.i];
+  if (!fullS) return;
+  const wv = e.target.closest("[data-wi]");
+  if (wv && !fullS.rot) { const i = +wv.dataset.wi; [fullS.wi, fullS.wk] = fullS.wi === i ? [null, null] : [i, wv.dataset.wk]; return drawFull(); }
+  const b = e.target.closest("[data-f]");
+  if (!b) { if (fullS.wi != null && !e.target.closest(".wpop")) { fullS.wi = null; drawFull(); } return; }
+  const k = b.dataset.f, c = fullS.list[fullS.i];
+  if (k === "wsay") return say(fullS.wk);
+  if (k === "wclose") { fullS.wi = null; return drawFull(); }
   if (k === "close") return closeFull();
   if (k === "fav") toggleFav({...c, zh: [].concat(c.lines || c.zh)});
   if (k === "pin") toast(togglePin(c) ? "Кнопка добавлена наверх главной" : "Кнопка убрана с главной");
   if (k === "plus") fullS.fz = Math.min(2.2, +(fullS.fz + .15).toFixed(2));
   if (k === "minus") fullS.fz = Math.max(.6, +(fullS.fz - .15).toFixed(2));
   if (k === "plus" || k === "minus") store.set("fz", fullS.fz);
-  if (k === "rot") fullS.rot = !fullS.rot;
+  if (k === "rot") { fullS.rot = !fullS.rot; fullS.wi = null; }
   if (k === "say") say([].concat(c.lines || c.zh).join(""));
   drawFull();
 };
-function fullStep(d) { if (!fullS || fullS.list.length < 2) return; fullS.i = (fullS.i + d + fullS.list.length) % fullS.list.length; drawFull(); }
+function fullStep(d) { if (!fullS || fullS.list.length < 2) return; fullS.i = (fullS.i + d + fullS.list.length) % fullS.list.length; fullS.wi = null; drawFull(); }
 // свайпы: универсальный обработчик (горизонтальный жест, без конфликта с вертикальной прокруткой)
 function onSwipe(el, fn) {
   let x0 = null, y0 = 0;
@@ -1283,7 +1323,7 @@ async function hardRefresh() {
 // ---- помощь и FAQ
 const FAQ = [
   ["Как быстро найти фразу", `<p>Пишите в поиск на главной: по-русски («вода»), pinyin без тонов («shui»), кириллицей («шуэй») или иероглифами. Нажмите фразу — она откроется крупно: иероглифы, pinyin, кириллица «как слышится», перевод и 🔊.</p><p>В каждом блоке результатов (фразы, справка, уроки) сначала видно 3 — остальные под кнопкой «Показать больше».</p><p>Весь разговорник по разделам — вкладка «Словарь» (разделы по алфавиту, внутри — поиск по разделу).</p><p>Нет нужной фразы — внизу результатов «Спросить Claude»: ответ сохраняется в «Мои фразы» и дальше работает без интернета.</p>`],
-  ["Как показать фразу собеседнику", `<p>Нажмите фразу — откроется крупно на белом фоне. A+ / A− — размер, «Поворот» — горизонтально, свайп — соседние фразы. Пока карточка открыта, экран не гаснет (на iPhone с iOS 18.4 и новее).</p>`],
+  ["Как показать фразу собеседнику", `<p>Нажмите фразу — откроется крупно на белом фоне. A+ / A− — размер, «Поворот» — горизонтально, свайп — соседние фразы. Нажмите на слово (подчёркнуто пунктиром) — появится его перевод, pinyin и комментарий; 🔊 в подсказке произносит слово. В режиме «Поворот» слова не нажимаются. Пока карточка открыта, экран не гаснет (на iPhone с iOS 18.4 и новее).</p>`],
   ["Как пройти и такси: свои адреса", `<p>Кнопка «Как пройти» на главной → список мест → карточка для прохожего «Скажите, как пройти сюда?» с названием и адресом. Такси — «Ещё → Мои места» (карточка для водителя); кнопку «Такси» можно вернуть на главную через «⚙ Настроить главную».</p><p>«+ Добавить место»: название по-русски для себя, название и адрес иероглифами (скопируйте из подтверждения брони или карты, или попросите на ресепшн написать). Нажали место — карточка для водителя с адресом.</p><p>Нет адреса — «Покажу на карте»: «как пройти сюда?» или «отвезите сюда» плюс «покажу на карте».</p><p>Править — кнопка ✎ справа, удалить — свайп влево по месту → «Удалить».</p>`],
   ["Как настроить главную", `<p>Внизу главной — «⚙ Настроить главную»: какие блоки показывать (кнопки, недавние, избранное) и в каком порядке, какие кнопки наверху. Один блок всегда остаётся. Избранное на главной по умолчанию выключено — оно во вкладке «Избранное». Разделы фраз — во вкладке «Словарь».</p><p>Любую фразу или место можно сделать кнопкой: откройте крупно и нажмите «📌 На главную» вверху экрана. Нажмите ещё раз («📌 На главной») — кнопка уберётся.</p>`],
   ["Что во вкладке «Избранное»", `<p>Фразы, отмеченные ☆ (в поиске, Словаре, при показе крупно), карточками для собеседника. ＋ откроет Словарь с подсказкой. Показать избранное и на главной — «⚙ Настроить главную» → галочка «Избранное».</p>`],
@@ -1305,8 +1345,12 @@ function drawFaq() {
 }
 
 // ---- вводный гайд (первый запуск) и «Что нового» (после обновления)
-const APP_REV = 19;  // номер редакции; cn:ver — последняя редакция, которую видел пользователь (до ред. 12 не хранилась → 11)
+const APP_REV = 20;  // номер редакции; cn:ver — последняя редакция, которую видел пользователь (до ред. 12 не хранилась → 11)
 const CHANGES = [
+  {rev: 20, date: "24.10.2026", items: [
+    "Перевод каждого слова: в показе крупно нажмите на слово (подчёркнуто пунктиром) — появится перевод, pinyin и комментарий, если нужен (например, 斤 — 500 г). 🔊 — произнести слово.",
+    "В режиме «Поворот» слова не нажимаются — карточку удобно показывать собеседнику.",
+  ]},
   {rev: 19, date: "24.10.2026", items: [
     "Полное название приложения — «Travel Companions · Китайский».",
     "Файл резервной копии называется по-новому; копии, сохранённые раньше, не восстанавливаются.",
