@@ -291,7 +291,7 @@ try { FRESH = !Object.keys(localStorage).some(k => k.startsWith("cn:")); } catch
 const ALL = [];
 for (const [sect, items] of Object.entries(DATA.phrases)) for (const [zh, py, cy, ru] of items) ALL.push({zh, py, cy, ru, deck: "Фразы: " + sect});
 for (const [zh, py, cy, ru, g] of DATA.signs) ALL.push({zh, py, cy, ru, deck: "Вывески: " + g});
-// колода «Цифры» заменена разделами «Числа», «Количество», «Цены на слух» (NUMBERS остаётся для PDF);
+// колода «Цифры» заменена разделами «Числа», «Количество», «Цены на слух»;
 // вокзалы входят в раздел «Поезд» (собирается в build_pwa.py)
 for (const l of DATA.lessons) for (const b of l.theory) if (b.k === "e") ALL.push({zh: b.zh, py: b.py, cy: b.cy, ru: b.ru, deck: `Урок ${l.n}: ${l.title}`});
 ALL.forEach((c, i) => c.id = c.deck + "|" + c.zh);
@@ -1236,7 +1236,7 @@ function drawSettings() {
     <div class="row"><button class="btn" data-s="clr-recent" style="font-size:14px">Очистить недавние</button><button class="btn" data-s="clr-places" style="font-size:14px">Удалить все мои места</button></div>
     <div class="row"><button class="btn" data-s="clr-home" style="font-size:14px">Главная как было</button><button class="btn" data-s="clr-hidden" style="font-size:14px">Вернуть скрытые карточки</button></div>
     <div class="row"><button class="btn" data-s="clr-favs" style="font-size:14px">Очистить избранное</button><button class="btn no" data-s="clr-all" style="font-size:14px">Удалить все данные</button></div>
-    <h2>О приложении</h2><p class="muted">Открытый проект: <a href="https://github.com/aleksandrkaiser/cn-trainer" target="_blank" rel="noopener" style="color:var(--cy)">github.com/aleksandrkaiser/cn-trainer</a> · <a href="China_razgovornik.pdf" target="_blank" style="color:var(--cy)">PDF-версия</a> · лицензия MIT.</p>
+    <h2>О приложении</h2><p class="muted">Открытый проект: <a href="https://github.com/aleksandrkaiser/cn-trainer" target="_blank" rel="noopener" style="color:var(--cy)">github.com/aleksandrkaiser/cn-trainer</a> · лицензия MIT.</p>
 `;
   $("v-set").onclick = e => {
     const th = e.target.closest("[data-th]"); if (th) { setTheme(th.dataset.th); return drawSettings(); }

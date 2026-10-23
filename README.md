@@ -5,7 +5,7 @@
 
 Бесплатное приложение для русскоязычного туриста в Китае: фразы с иероглифами, pinyin и **произношением кириллицей «как слышится»**, карточки «показать таксисту» со своими адресами, справочник о жизни в Китае и уроки. Работает **без интернета** — ставится на экран «Домой» iPhone как обычное приложение.
 
-**▶ Открыть: [aleksandrkaiser.github.io/cn-trainer](https://aleksandrkaiser.github.io/cn-trainer/)** · [PDF-версия](China_razgovornik.pdf) (141 страница под экран телефона)
+**▶ Открыть: [aleksandrkaiser.github.io/cn-trainer](https://aleksandrkaiser.github.io/cn-trainer/)**
 
 <p>
 <img src="docs/screenshots/1-home.png" width="200" alt="Главная: поиск, кнопки, избранное, недавние">
@@ -75,16 +75,16 @@ src/data.py       фразы, вывески, карточки        src/build.
 src/lessons.py    уроки и упражнения              src/check.py      проверки данных и сборки
 src/guide.py      справочник с источниками         src/e2e.py        сквозной тест в Chromium
 src/translit.py   pinyin → кириллица
-src/pwa_template.html  интерфейс                   src/build_pdf.py  PDF-разговорник
+src/pwa_template.html  интерфейс
 ```
 
 ```sh
-sh src/build.sh            # пересобрать PDF и приложение → «ИТОГ: OK»
+sh src/build.sh            # пересобрать приложение → «ИТОГ: OK»
 python3 src/e2e.py         # главная, места, все уроки, офлайн и обновление
 python3 src/e2e.py --shots # то же + скриншоты в docs/screenshots/
 ```
 
-Нужны: Python 3, `wkhtmltopdf`, шрифт Noto Sans CJK, Node.js (проверка синтаксиса JS), `playwright` для тестов. На каждый push GitHub Actions пересобирает проект и прогоняет тесты.
+Нужны: Python 3, Node.js (проверка синтаксиса JS), `playwright` для тестов. На каждый push GitHub Actions пересобирает проект и прогоняет тесты.
 
 Хотите разговорник для другой страны — сделайте форк и замените данные в `src/*.py`: интерфейс от языка почти не зависит (кроме транскрипции).
 

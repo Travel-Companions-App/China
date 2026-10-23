@@ -9,9 +9,8 @@ from translit import to_cyr, SYLLABLES_BY_INITIAL, syl_cyr
 
 ph = {k: [[z, p, to_cyr(p), r] for z, p, r in v] for k, v in PHRASES.items()}
 signs = [[z, p, to_cyr(p), r, g] for z, p, r, g in SIGNS]
-nums = [[z, p, to_cyr(p), r] for z, p, r in NUMBERS]
 st = [[z, p, to_cyr(p), r] for z, p, r in BEIJING_STATIONS]
-# в тренажёре вокзалы — часть раздела «Поезд» (в PDF — отдельная страница)
+# в тренажёре вокзалы — часть раздела «Поезд»
 ph["Поезд"] = ph["Поезд"] + st
 show = [dict(c, cy=to_cyr(c["py"])) for c in SHOW_CARDS]
 groups = [("Без согласного (a, e, o, y-, w-)", [""]), ("b p m f", list("bpmf")), ("d t n l", list("dtnl")),
@@ -49,7 +48,7 @@ def lesson_json(l):
 guide = [dict(g, phrases=[[z, p, to_cyr(p), r] for z, p, r in g["phrases"]]) for g in GUIDE]
 SITE = "https://aleksandrkaiser.github.io/cn-trainer/"
 place = {k: [v[0], v[1], to_cyr(v[1])] if isinstance(v, tuple) else v for k, v in PLACE_CARD.items()}
-data = {"phrases": ph, "signs": signs, "numbers": nums, "stations": st, "show": show, "tips": TIPS, "syllables": syl,
+data = {"phrases": ph, "signs": signs, "stations": st, "show": show, "tips": TIPS, "syllables": syl,
         "lessons": [lesson_json(l) for l in LESSONS],
         "guide": guide, "checked": CHECKED, "place": place}
 tpl = open(os.path.join(SRC, "pwa_template.html"), encoding="utf-8").read()
@@ -98,6 +97,5 @@ open(os.path.join(OUT, "sw.js"), "w").write(sw)
 # sitemap.xml подаётся вручную в Google Search Console / Яндекс.Вебмастер.
 open(os.path.join(OUT, "sitemap.xml"), "w").write(
     '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-    f'  <url><loc>{SITE}</loc><lastmod>{data["built"]}</lastmod></url>\n'
-    f'  <url><loc>{SITE}China_razgovornik.pdf</loc><lastmod>{data["built"]}</lastmod></url>\n</urlset>\n')
+    f'  <url><loc>{SITE}</loc><lastmod>{data["built"]}</lastmod></url>\n</urlset>\n')
 print("built", ver, len(html), "bytes")
