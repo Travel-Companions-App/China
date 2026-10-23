@@ -211,7 +211,7 @@ button{-webkit-user-select:none;user-select:none}
 </head>
 <body>
 <header><select id="deck"></select><div class="voice muted" id="vstat"></div></header>
-<noscript><p style="padding:16px">Офлайн-разговорник китайского для туриста: фразы с иероглифами, pinyin и произношением кириллицей, карточки для таксиста, уроки и справочник. Для работы включите JavaScript. Исходники и описание: <a href="https://github.com/aleksandrkaiser/china-travel-companion">github.com/aleksandrkaiser/china-travel-companion</a>.</p></noscript>
+<noscript><p style="padding:16px">Офлайн-разговорник китайского для туриста: фразы с иероглифами, pinyin и произношением кириллицей, карточки для таксиста, уроки и справочник. Для работы включите JavaScript. Исходники и описание: <a href="https://github.com/Travel-Companions-App/China">github.com/Travel-Companions-App/China</a>.</p></noscript>
 <main>
   <section id="v-home" class="home"></section>
   <section id="v-show" class="hide">
@@ -1237,7 +1237,7 @@ function drawSettings() {
     <div class="row"><button class="btn" data-s="clr-recent" style="font-size:14px">Очистить недавние</button><button class="btn" data-s="clr-places" style="font-size:14px">Удалить все мои места</button></div>
     <div class="row"><button class="btn" data-s="clr-home" style="font-size:14px">Главная как было</button><button class="btn" data-s="clr-hidden" style="font-size:14px">Вернуть скрытые карточки</button></div>
     <div class="row"><button class="btn" data-s="clr-favs" style="font-size:14px">Очистить избранное</button><button class="btn no" data-s="clr-all" style="font-size:14px">Удалить все данные</button></div>
-    <h2>О приложении</h2><p class="muted">Открытый проект: <a href="https://github.com/aleksandrkaiser/china-travel-companion" target="_blank" rel="noopener" style="color:var(--cy)">github.com/aleksandrkaiser/china-travel-companion</a> · лицензия MIT.</p>
+    <h2>О приложении</h2><p class="muted">Открытый проект: <a href="https://github.com/Travel-Companions-App/China" target="_blank" rel="noopener" style="color:var(--cy)">github.com/Travel-Companions-App/China</a> · лицензия MIT.</p>
 `;
   $("v-set").onclick = e => {
     const th = e.target.closest("[data-th]"); if (th) { setTheme(th.dataset.th); return drawSettings(); }
@@ -1301,7 +1301,7 @@ const FAQ = [
 ];
 function drawFaq() {
   $("v-faq").innerHTML = `<h2 style="margin-top:4px">Помощь и FAQ</h2><div class="row" style="margin-bottom:6px"><button class="btn" data-faq="intro" style="font-size:14px">Показать вводный гайд</button><button class="btn" data-faq="news" style="font-size:14px">Что нового</button></div>` + FAQ.map(([q, a]) => `<details><summary>${esc(q)}</summary>${a}</details>`).join("") +
-    `<p class="muted" style="margin-top:14px">Не нашли ответ — откройте <a href="https://github.com/aleksandrkaiser/china-travel-companion/issues" target="_blank" rel="noopener" style="color:var(--cy)">issues на GitHub</a>.</p>`;
+    `<p class="muted" style="margin-top:14px">Не нашли ответ — откройте <a href="https://github.com/Travel-Companions-App/China/issues" target="_blank" rel="noopener" style="color:var(--cy)">issues на GitHub</a>.</p>`;
   $("v-faq").onclick = e => { const b = e.target.closest("[data-faq]"); if (!b) return; if (b.dataset.faq === "intro") showIntro(); else showNews(0); };
 }
 

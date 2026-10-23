@@ -1,11 +1,11 @@
 # Китайский для туриста — офлайн-разговорник и тренажёр
 
-[![Проверки](https://github.com/aleksandrkaiser/china-travel-companion/actions/workflows/check.yml/badge.svg)](https://github.com/aleksandrkaiser/china-travel-companion/actions/workflows/check.yml)
+[![Проверки](https://github.com/Travel-Companions-App/China/actions/workflows/check.yml/badge.svg)](https://github.com/Travel-Companions-App/China/actions/workflows/check.yml)
 [![Лицензия: MIT](https://img.shields.io/badge/лицензия-MIT-green.svg)](LICENSE)
 
 Бесплатное приложение для русскоязычного туриста в Китае: фразы с иероглифами, pinyin и **произношением кириллицей «как слышится»**, карточки «показать таксисту» со своими адресами, справочник о жизни в Китае и уроки. Работает **без интернета** — ставится на экран «Домой» iPhone как обычное приложение.
 
-**▶ Открыть: [aleksandrkaiser.github.io/china-travel-companion](https://aleksandrkaiser.github.io/china-travel-companion/)**
+**▶ Открыть: [travel-companions-app.github.io/China](https://travel-companions-app.github.io/China/)**
 
 <p>
 <img src="docs/screenshots/1-home.png" width="200" alt="Главная: поиск, кнопки, избранное, недавние">
@@ -32,7 +32,7 @@
 
 ## Установка на iPhone
 
-1. Откройте [ссылку](https://aleksandrkaiser.github.io/china-travel-companion/) в **Safari**.
+1. Откройте [ссылку](https://travel-companions-app.github.io/China/) в **Safari**.
 2. «Поделиться» → «На экран „Домой“».
 3. Откройте приложение с иконки один раз при интернете — всё скачается для офлайна.
 

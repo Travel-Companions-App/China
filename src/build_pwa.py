@@ -46,7 +46,7 @@ def lesson_json(l):
     return dict(l, theory=th, ex=ex)
 
 guide = [dict(g, phrases=[[z, p, to_cyr(p), r] for z, p, r in g["phrases"]]) for g in GUIDE]
-SITE = "https://aleksandrkaiser.github.io/china-travel-companion/"
+SITE = "https://travel-companions-app.github.io/China/"
 place = {k: [v[0], v[1], to_cyr(v[1])] if isinstance(v, tuple) else v for k, v in PLACE_CARD.items()}
 data = {"phrases": ph, "signs": signs, "stations": st, "show": show, "tips": TIPS, "syllables": syl,
         "lessons": [lesson_json(l) for l in LESSONS],
@@ -68,7 +68,7 @@ jsonld = {"@context": "https://schema.org", "@type": "WebApplication", "name": "
           "url": SITE, "inLanguage": "ru", "applicationCategory": "EducationalApplication", "operatingSystem": "iOS, Android, любой браузер",
           "isAccessibleForFree": True, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "RUB"},
           "description": f"Офлайн-разговорник китайского для туристов: {n_phr} фраз, {len(SIGNS)} вывесок, {len(LESSONS)} уроков, справочник о жизни в Китае. Pinyin и произношение кириллицей.",
-          "codeRepository": "https://github.com/aleksandrkaiser/china-travel-companion", "license": "https://opensource.org/licenses/MIT"}
+          "codeRepository": "https://github.com/Travel-Companions-App/China", "license": "https://opensource.org/licenses/MIT"}
 html = (tpl.replace("__DATA__", json.dumps(data, ensure_ascii=False))
            .replace("__JSONLD__", json.dumps(jsonld, ensure_ascii=False))
            .replace("__SITE__", SITE))
@@ -93,7 +93,7 @@ self.addEventListener("fetch", e => {{
 }});
 """
 open(os.path.join(OUT, "sw.js"), "w").write(sw)
-# robots.txt здесь бесполезен: краулеры читают его только из корня домена (aleksandrkaiser.github.io/robots.txt).
+# robots.txt здесь бесполезен: краулеры читают его только из корня домена (travel-companions-app.github.io/robots.txt).
 # sitemap.xml подаётся вручную в Google Search Console / Яндекс.Вебмастер.
 open(os.path.join(OUT, "sitemap.xml"), "w").write(
     '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
