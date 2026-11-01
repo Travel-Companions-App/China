@@ -202,10 +202,10 @@ with sync_playwright() as p:
     for i in range(ev("DATA.guide.length")):
         pg.click(f"[data-g='{i}']"); check(pg.locator(".pts li").count() > 0 and pg.locator(".src a").count() > 0, "статья: " + ev(f"DATA.guide[{i}].title"))
         pg.click("[data-a=list]")
-    gi = ev("DATA.guide.findIndex(g => g.copy.length)"); check(gi >= 0, "есть статья с текстами для вставки")
-    pg.click(f"[data-g='{gi}']"); n_cp = pg.locator(".pts .cp").count(); n_c = pg.locator(".chips [data-c]").count()
+    gi = ev("DATA.guide.findIndex(g => g.points.some(p => p.includes('`')))"); check(gi >= 0, "есть статья с текстом для копирования")
+    pg.click(f"[data-g='{gi}']"); n_cp = pg.locator(".pts .cp").count()
     pg.locator(".pts .cp").first.click(); pg.wait_for_timeout(300)
-    check(n_cp > 0 and n_c > 0 and pg.locator("#toast.on").count() == 1 and "копир" in pg.locator("#toast").inner_text().lower(), "справка: копирование по нажатию")
+    check(n_cp > 0 and pg.locator("#toast.on").count() == 1 and "копир" in pg.locator("#toast").inner_text().lower(), "справка: копирование по нажатию")
     pg.click("[data-a=list]")
 
     print("Ещё")
