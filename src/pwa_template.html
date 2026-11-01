@@ -157,6 +157,7 @@ h2{font-size:13px;color:var(--acc);margin:20px 0 2px;text-transform:uppercase;le
 .seg button{flex:1;border:0;background:none;border-radius:8px;padding:8px;font:inherit;font-size:14px;color:var(--fg)}
 .seg button.on{background:var(--card);font-weight:600}
 .pts li{margin:8px 0;font-size:16px}
+.cp{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:8px;padding:1px 6px 1px 7px;font:inherit;font-weight:600;margin:1px 0}.cp::after{content:"⧉";margin-left:4px;font-weight:400;color:var(--muted);font-size:.85em}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 .chip{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:10px;padding:8px 10px;font:inherit;text-align:left}
 .chip b{font-size:18px;display:block}.chip small{display:block;color:var(--muted);font-size:12px}
@@ -907,6 +908,13 @@ function checkOrder() {
 
 // ---- справочник
 let gdOpen = null;
+// `текст` в пункте статьи → кнопка «скопировать» (поиск и поля в Alipay); на входе уже экранированный текст
+// надписи интерфейса (иероглифы вне кнопок) — жирным, чтобы их было легко найти глазами
+const cpMark = h => h.split("`").map((t, i) => i % 2 ? `<button class="cp" data-c="${t}">${t}</button>` : t.replace(/[\u3400-\u9fff][\u3400-\u9fff0-9]*/g, "<b>$&</b>")).join("");
+function copyTxt(t) {
+  const ok = () => toast("Скопировано: " + t), bad = () => toast("Не скопировалось — выделите текст вручную");
+  try { navigator.clipboard.writeText(t).then(ok, bad); } catch { bad(); }
+}
 function drawGuide() {
   const box = $("v-gd");
   if (gdOpen === null) {
@@ -915,13 +923,15 @@ function drawGuide() {
   } else {
     const g = DATA.guide[gdOpen];
     box.innerHTML = `<button class="back" data-a="list">‹ Справка</button><div style="font-size:22px;font-weight:700">${esc(g.title)}</div><ul class="pts">` +
-      g.points.map(p => `<li>${esc(p)}</li>`).join("") + `</ul>` +
+      g.points.map(p => `<li>${cpMark(esc(p))}</li>`).join("") + `</ul>` +
+      (g.copy.length ? `<h2>Тексты для вставки — нажмите, чтобы скопировать</h2><div class="chips">` + g.copy.map(c => `<button class="chip" data-c="${esc(c[0])}"><b>${esc(c[0])}</b><small>${esc(c[1])}</small></button>`).join("") + `</div>` : "") +
       (g.phrases.length ? `<h2>Фразы — нажмите, чтобы показать крупно</h2><div class="chips">` + g.phrases.map((p, i) => `<button class="chip" data-p="${i}"><b>${esc(p[0])}</b><small>${esc(p[1])} · ${esc(p[2])}</small><small>${esc(p[3])}</small></button>`).join("") + `</div>` : "") +
-      `<div class="src">Источники (проверено ${esc(DATA.checked)}):<br>` + g.sources.map(s => `• <a href="${esc(s[1])}" target="_blank" rel="noopener">${esc(s[0])}</a> — ${esc(s[2])}`).join("<br>") + `</div>` +
+      `<div class="src">Источники (проверено ${esc(g.checked)}):<br>` + g.sources.map(s => `• ${s[1] ? `<a href="${esc(s[1])}" target="_blank" rel="noopener">${esc(s[0])}</a>` : esc(s[0])} — ${esc(s[2])}`).join("<br>") + `</div>` +
       (gdOpen + 1 < DATA.guide.length ? `<button class="btn big" data-a="next">${esc(DATA.guide[gdOpen + 1].title)} ›</button>` : "");
   }
   box.onclick = e => {
     const gi = e.target.closest("[data-g]"); if (gi) return openGuideIn(+gi.dataset.g);
+    const cp = e.target.closest("[data-c]"); if (cp) return copyTxt(cp.dataset.c);
     const p = e.target.closest("[data-p]"); if (p) { const [zh, py, cy, ru] = DATA.guide[gdOpen].phrases[+p.dataset.p]; openFull({zh: [zh], py, cy, ru}); return; }
     const a = e.target.closest("[data-a]"); if (!a) return;
     if (a.dataset.a === "list") { if (!navBack()) { gdOpen = null; drawGuide(); } return; }
@@ -1345,8 +1355,12 @@ function drawFaq() {
 }
 
 // ---- вводный гайд (первый запуск) и «Что нового» (после обновления)
-const APP_REV = 20;  // номер редакции; cn:ver — последняя редакция, которую видел пользователь (до ред. 12 не хранилась → 11)
+const APP_REV = 21;  // номер редакции; cn:ver — последняя редакция, которую видел пользователь (до ред. 12 не хранилась → 11)
 const CHANGES = [
+  {rev: 21, date: "01.11.2026", items: [
+    "Справка: три новые статьи — «Доставка через Alipay: заказ», «Доставка: адрес, телефон, ресепшен», «Кофе и чай: заказ в мини-программе». Пошагово: что искать, что нажимать, что вводить в поля.",
+    "Слова в рамке со значком ⧉ копируются нажатием — вставляйте в поиск и поля Alipay. Готовые тексты для курьера и ресепшена — в блоке «Тексты для вставки».",
+  ]},
   {rev: 20, date: "24.10.2026", items: [
     "Перевод каждого слова: в показе крупно нажмите на слово (подчёркнуто пунктиром) — появится перевод, pinyin и комментарий, если нужен (например, 斤 — 500 г). 🔊 — произнести слово.",
     "В режиме «Поворот» слова не нажимаются — карточку удобно показывать собеседнику.",
